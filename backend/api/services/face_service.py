@@ -4,11 +4,27 @@ import uuid
 import numpy as np
 from typing import Any
 
-from api.config import FACE_DB_ROOT, EMB_DB_ROOT, TEMP_FACE_DB_ROOT, TEMP_EMB_DB_ROOT
+from api.config import FACE_DB_ROOT, EMB_DB_ROOT, TEMP_FACE_DB_ROOT, TEMP_EMB_DB_ROOT, MAX_VIEWS
 from register_face import register_face, generate_embeddings, get_app
 from tracker_utils import cosine_similarity, recognize_face as match_embedding, face_embedding
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+
+
+def append_embedding_view(current: np.ndarray, emb: np.ndarray, max_views: int = MAX_VIEWS) -> np.ndarray:
+    if current.ndim == 1:
+        current = np.expand_dims(current, 0)
+    emb = np.asarray(emb, dtype=np.float32).reshape(1, -1)
+    if len(current) < max_views:
+        return np.vstack([current, emb])
+    anchors = max(2, min(len(current), max_views // 5))
+    learned_budget = max_views - anchors
+    tail = current[anchors:]
+    if len(tail) >= learned_budget:
+        tail = tail[-(learned_budget - 1):] if learned_budget > 1 else tail[:0]
+    if len(tail):
+        return np.vstack([current[:anchors], tail, emb])
+    return np.vstack([current[:anchors], emb])
 
 
 def _list_images(folder: str) -> list[str]:

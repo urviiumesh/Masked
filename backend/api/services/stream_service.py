@@ -10,10 +10,15 @@ from typing import Any
 import cv2
 import numpy as np
 
-from api.config import THRESHOLD_HIGH_CONF, MAX_VIEWS, EMB_DB_ROOT, TEMP_EMB_DB_ROOT
+from api.config import THRESHOLD_HIGH_CONF, EMB_DB_ROOT, TEMP_EMB_DB_ROOT
 from api.services.camera_presets import get_preset, preset_to_rtsp_urls
 from api.services.detect_utils import detect_faces_live, refine_small_face_embedding
-from api.services.face_service import load_all_embeddings, load_embeddings_for_targets, recognize_embedding
+from api.services.face_service import (
+    append_embedding_view,
+    load_all_embeddings,
+    load_embeddings_for_targets,
+    recognize_embedding,
+)
 from api.services.log_service import add_log, status_from_score, save_snapshot
 from api.services.runtime_device import active_provider, runtime_info
 from register_face import get_stream_app, reset_stream_app
@@ -395,13 +400,7 @@ class StreamManager:
                     "expires_at": now + OVERLAY_TTL_SEC,
                 })
                 if score_f >= THRESHOLD_HIGH_CONF and name in self._db and min(face_w, face_h) >= SMALL_FACE_PX:
-                    current = self._db[name]
-                    if current.ndim == 1:
-                        current = np.expand_dims(current, 0)
-                    updated = np.vstack([current, emb])
-                    if len(updated) > MAX_VIEWS:
-                        updated = updated[-MAX_VIEWS:]
-                    self._db[name] = updated
+                    self._db[name] = append_embedding_view(self._db[name], emb)
                     self._dirty.add(name)
                 last = self._last_log_time.get(name, 0)
                 if now - last >= LOG_COOLDOWN_SEC:

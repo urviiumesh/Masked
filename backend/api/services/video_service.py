@@ -8,9 +8,14 @@ from typing import Any
 import cv2
 import numpy as np
 
-from api.config import UPLOAD_DIR, THRESHOLD_KNOWN, THRESHOLD_HIGH_CONF, MAX_VIEWS, EMB_DB_ROOT
+from api.config import UPLOAD_DIR, THRESHOLD_KNOWN, THRESHOLD_HIGH_CONF, EMB_DB_ROOT
 from api.services.detect_utils import detect_faces
-from api.services.face_service import load_all_embeddings, load_embeddings_for_targets, recognize_embedding
+from api.services.face_service import (
+    append_embedding_view,
+    load_all_embeddings,
+    load_embeddings_for_targets,
+    recognize_embedding,
+)
 from api.services.log_service import add_log, status_from_score
 from register_face import get_video_app
 from tracker_utils import face_embedding
@@ -281,13 +286,7 @@ def _process(job_id: str, video_path: str, targets: list[str] | None):
                     "start_sec": float(timestamp),
                 })
                 if score_f >= THRESHOLD_HIGH_CONF and name in db:
-                    current = db[name]
-                    if current.ndim == 1:
-                        current = np.expand_dims(current, 0)
-                    updated = np.vstack([current, emb])
-                    if len(updated) > MAX_VIEWS:
-                        updated = updated[-MAX_VIEWS:]
-                    db[name] = updated
+                    db[name] = append_embedding_view(db[name], emb)
                     dirty_faces.add(name)
                 last = last_log_at.get(name, -999.0)
                 if timestamp - last >= 2.0:
@@ -301,13 +300,13 @@ def _process(job_id: str, video_path: str, targets: list[str] | None):
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                 cv2.putText(frame, f"{display} ({score_f:.2f})", (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             out.write(frame)
-            if frame_idx % 5 == 0 or frame_idx == total:
+            if frame_boxes or frame_idx % 3 == 0 or frame_idx == total:
                 progress = round(frame_idx / total * 100, 1) if total else 0.0
                 with _lock:
                     _jobs[job_id]["current_frame"] = int(frame_idx)
                     _jobs[job_id]["total_frames"] = int(total)
                     _jobs[job_id]["progress"] = float(progress)
-                    _jobs[job_id]["detections"] = detections[-200:]
+                    _jobs[job_id]["detections"] = list(detections[-300:])
         cap.release()
         out.release()
         for name in dirty_faces:

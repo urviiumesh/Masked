@@ -65,12 +65,10 @@ export default function VideoProcessing() {
 
   const pollJob = useCallback((localId: string, jobId: string) => {
     if (pollRef.current) clearInterval(pollRef.current)
-    let tick = 0
     pollRef.current = setInterval(async () => {
       try {
         const j = await api.getVideoJob(jobId)
         const phase = j.status === 'completed' ? 'completed' : j.status === 'failed' ? 'failed' : 'processing'
-        tick += 1
         updateItem(localId, {
           progress: j.progress,
           phase,
@@ -79,23 +77,18 @@ export default function VideoProcessing() {
           jobId: j.id,
           fileName: j.filename || queueRef.current.find((q) => q.localId === localId)?.fileName || 'video',
         })
-        const done = j.status === 'completed' || j.status === 'failed'
-        const shouldRefreshUi = done || tick % 2 === 0
-        if (shouldRefreshUi) {
-          setActiveId((cur) => {
-            if (cur === localId || cur === null) {
-              if (phase === 'processing') {
-                setActiveJob((prev) => ({
-                  ...j,
-                  detections: prev?.id === j.id ? (prev.detections || []) : (j.detections || []).slice(-30),
-                }))
-              } else {
-                showJob(j, localId)
-              }
+        setActiveId((cur) => {
+          if (cur === localId || cur === null) {
+            setActiveJob(j)
+            if (j.status === 'completed' && j.output_url) {
+              setVideoKey(Date.now())
+              setVideoError('')
             }
-            return cur ?? localId
-          })
-        }
+            sessionStorage.setItem(ACTIVE_KEY, j.id)
+          }
+          return cur ?? localId
+        })
+        const done = j.status === 'completed' || j.status === 'failed'
         if (done) {
           if (pollRef.current) clearInterval(pollRef.current)
           pollRef.current = null
@@ -110,7 +103,7 @@ export default function VideoProcessing() {
         pollRef.current = null
         processingRef.current = false
       }
-    }, 2500)
+    }, 1000)
   }, [showJob, updateItem])
 
   useEffect(() => {
@@ -371,6 +364,11 @@ export default function VideoProcessing() {
   const isBusy = queue.some((q) => ['uploading', 'uploaded', 'processing'].includes(q.phase))
   const outputUrl = activeJob?.status === 'completed' ? (activeJob.output_url || `/api/video/jobs/${activeJob.id}/output`) : null
   const outputSrc = outputUrl ? `${outputUrl}?v=${videoKey}` : null
+  const detectionCounts: Record<string, number> = {}
+  for (const d of activeJob?.detections ?? []) {
+    detectionCounts[d.name] = (detectionCounts[d.name] || 0) + 1
+  }
+  const liveDetections = [...(activeJob?.detections ?? [])].reverse()
 
   return (
     <div className="h-[calc(100vh-48px)] flex flex-col p-4 gap-4 max-w-[1920px] mx-auto w-full">
@@ -455,10 +453,18 @@ export default function VideoProcessing() {
                         </div>
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm text-text-primary font-medium truncate">{p.name}</div>
                       <div className="text-[10px] font-mono text-text-secondary">ID {p.id}</div>
                     </div>
+                    {selected.has(p.name) && (
+                      <span
+                        title={`${detectionCounts[p.name] || 0} detections in this video`}
+                        className="shrink-0 min-w-[1.75rem] text-center bg-surface-container-high text-surface-tint text-[10px] font-mono px-2 py-0.5 rounded border border-border"
+                      >
+                        {detectionCounts[p.name] || 0}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -555,7 +561,7 @@ export default function VideoProcessing() {
               }
             />
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-              {(activeJob?.detections ?? []).length === 0 ? (
+              {liveDetections.length === 0 ? (
                 <EmptyState icon="frame_inspect" title="No detections recorded" subtitle="Detection instances appear during and after video processing" />
               ) : (
                 <table className="w-full text-sm">
@@ -568,8 +574,8 @@ export default function VideoProcessing() {
                     </tr>
                   </thead>
                   <tbody>
-                    {activeJob!.detections.map((d, i) => (
-                      <tr key={i} className="border-b border-border/50 hover:bg-surface-container-low transition-colors">
+                    {liveDetections.map((d, i) => (
+                      <tr key={`${d.frame}-${d.name}-${i}`} className="border-b border-border/50 hover:bg-surface-container-low transition-colors">
                         <td className="px-4 py-2.5 font-medium text-text-primary">{d.name}</td>
                         <td className="px-4 py-2.5 font-mono text-surface-tint">{(d.score * 100).toFixed(1)}%</td>
                         <td className="px-4 py-2.5 font-mono text-text-secondary text-xs">{d.timestamp}</td>
