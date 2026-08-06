@@ -17,7 +17,9 @@ export default function FaceDatabase() {
     setPersons(data.filter((p) => !p.is_unknown))
   }, [search])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load().catch((e) => setError(e instanceof Error ? e.message : 'Could not load persons'))
+  }, [load])
 
   const handleImageSelect = (file: File | null) => {
     setNewImage(file)
@@ -34,7 +36,7 @@ export default function FaceDatabase() {
       setShowModal(false)
       setNewName('')
       handleImageSelect(null)
-      load()
+      await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Registration failed')
     } finally {
@@ -44,8 +46,13 @@ export default function FaceDatabase() {
 
   const handleDelete = async (name: string) => {
     if (!confirm(`Delete ${name} from database?`)) return
-    await api.deletePerson(name)
-    load()
+    setError('')
+    try {
+      await api.deletePerson(name)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Delete failed')
+    }
   }
 
   return (

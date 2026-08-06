@@ -114,7 +114,7 @@ export default function VideoProcessing() {
   }, [showJob, updateItem])
 
   useEffect(() => {
-    loadPersons()
+    loadPersons().catch((e) => setError(e instanceof Error ? e.message : 'Could not load persons'))
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [loadPersons])
 

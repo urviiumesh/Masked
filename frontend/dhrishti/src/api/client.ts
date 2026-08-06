@@ -67,14 +67,29 @@ export interface VideoJob {
 }
 
 const BASE = ''
+const REQUEST_TIMEOUT_MS = 20_000
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, options)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || res.statusText)
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      ...options,
+      signal: options?.signal ?? controller.signal,
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }))
+      throw new Error(err.detail || res.statusText)
+    }
+    return res.json()
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('Backend request timed out. Check that the API is running on port 8000 and the camera source is available.')
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeout)
   }
-  return res.json()
 }
 
 export const api = {
@@ -123,6 +138,12 @@ export const api = {
 
   getLogs: (limit = 50, source?: string) =>
     request<DetectionLog[]>(`/api/logs?limit=${limit}${source ? `&source=${source}` : ''}`),
+
+  clearLogs: (source?: string) =>
+    request<{ deleted: number; deleted_snapshots: number }>(
+      `/api/logs${source ? `?source=${encodeURIComponent(source)}` : ''}`,
+      { method: 'DELETE' },
+    ),
 
   exportLogs: (source?: string) => {
     window.open(`/api/logs/export${source ? `?source=${source}` : ''}`, '_blank')

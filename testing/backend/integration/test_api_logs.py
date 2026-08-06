@@ -47,6 +47,38 @@ def test_export_logs(client, isolated_api_logs):
     assert len(res.content) > 0
 
 
+def test_clear_logs_by_source_deletes_events_and_snapshots(client, isolated_api_logs):
+    from api.services import log_service
+
+    snapshot = os.path.join(log_service.SNAPSHOTS_DIR, "livestream.jpg")
+    with open(snapshot, "wb") as f:
+        f.write(b"snapshot")
+    log_service.add_log(
+        "With snapshot",
+        0.88,
+        "MATCH",
+        snapshot_path=snapshot,
+        source="livestream",
+    )
+
+    res = client.delete("/api/logs?source=livestream")
+
+    assert res.status_code == 200
+    assert res.json() == {"deleted": 2, "deleted_snapshots": 1}
+    assert not os.path.exists(snapshot)
+    remaining = client.get("/api/logs").json()
+    assert [event["name"] for event in remaining] == ["Clip"]
+
+
+def test_clear_all_logs_removes_persisted_log_file(client, isolated_api_logs):
+    res = client.delete("/api/logs")
+
+    assert res.status_code == 200
+    assert res.json()["deleted"] == 2
+    assert not os.path.exists(os.path.join(isolated_api_logs, "events.json"))
+    assert client.get("/api/logs").json() == []
+
+
 def test_snapshot_missing(client, isolated_api_logs):
     res = client.get("/api/logs/snapshots/does-not-exist.jpg")
     assert res.status_code == 404

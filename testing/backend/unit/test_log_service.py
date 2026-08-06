@@ -57,6 +57,33 @@ def test_export_xlsx(isolated_logs):
     assert path.endswith(".xlsx")
 
 
+def test_clear_logs_removes_only_requested_source_and_its_snapshot(isolated_logs):
+    _, snaps = isolated_logs
+    snapshot = snaps / "live.jpg"
+    snapshot.write_bytes(b"fakejpeg")
+    log_service.add_log("Live", 0.8, "MATCH", snapshot_path=str(snapshot), source="livestream")
+    log_service.add_log("Video", 0.7, "MATCH", source="video")
+
+    result = log_service.clear_logs("livestream")
+
+    assert result == {"deleted": 1, "deleted_snapshots": 1}
+    assert not snapshot.exists()
+    assert [event["name"] for event in log_service.get_logs()] == ["Video"]
+
+
+def test_clear_logs_removes_log_file_and_cached_export(isolated_logs):
+    logs, _ = isolated_logs
+    log_service.add_log("Live", 0.8, "MATCH")
+    export = log_service.export_xlsx()
+
+    result = log_service.clear_logs()
+
+    assert result["deleted"] == 1
+    assert not os.path.exists(log_service.LOG_FILE)
+    assert not os.path.exists(export)
+    assert not list(logs.iterdir())
+
+
 def test_to_json_safe_numpy():
     payload = {"score": np.float32(0.5), "bbox": np.array([1, 2, 3])}
     safe = log_service._to_json_safe(payload)

@@ -30,6 +30,8 @@ LOG_COOLDOWN_SEC = 1.5
 SMALL_FACE_PX = 100
 PUBLISH_MIN_INTERVAL = 1.0 / 12.0
 STREAM_MATCH_FLOOR = 0.35
+CAPTURE_OPEN_TIMEOUT_MS = 7000
+CAPTURE_READ_TIMEOUT_MS = 7000
 
 
 class StreamManager:
@@ -78,7 +80,12 @@ class StreamManager:
             os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = (
                 "rtsp_transport;tcp|stimeout;5000000|max_delay;0|fflags;nobuffer|flags;low_delay"
             )
-            cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
+            params: list[int] = []
+            if hasattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC"):
+                params.extend([cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, CAPTURE_OPEN_TIMEOUT_MS])
+            if hasattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC"):
+                params.extend([cv2.CAP_PROP_READ_TIMEOUT_MSEC, CAPTURE_READ_TIMEOUT_MS])
+            cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG, params) if params else cv2.VideoCapture(source, cv2.CAP_FFMPEG)
             try:
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             except Exception:
@@ -86,18 +93,25 @@ class StreamManager:
             return cap
         if source.startswith("webcam:"):
             idx = int(source.split(":")[1])
-            backend = cv2.CAP_DSHOW if sys.platform == "win32" else 0
-            return cv2.VideoCapture(idx, backend)
+            if sys.platform == "win32":
+                os.environ.setdefault("OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS", "0")
+                for backend in (cv2.CAP_MSMF, cv2.CAP_DSHOW):
+                    cap = cv2.VideoCapture(idx, backend)
+                    if cap.isOpened():
+                        return cap
+                    cap.release()
+            return cv2.VideoCapture(idx)
         return cv2.VideoCapture(source)
 
     def _try_open(self, sources: list[str]):
         for src in sources:
             cap = self._open_capture(src)
             if cap.isOpened():
-                ret, frame = cap.read()
-                if ret and frame is not None:
-                    return cap, src
-                cap.release()
+                # Reading the first frame here can block the HTTP request
+                # indefinitely for an occupied webcam or unreachable RTSP feed.
+                # The capture thread owns frame reads after connection succeeds.
+                return cap, src
+            cap.release()
         raise RuntimeError(f"Could not open stream. Tried: {', '.join(sources)}")
 
     def _read_latest_frame(self):

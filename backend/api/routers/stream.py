@@ -7,9 +7,10 @@ from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
 from api.services.stream_service import stream_manager
-from api.services.log_service import get_logs, export_xlsx
+from api.services.log_service import clear_logs, export_xlsx, get_logs
 
 router = APIRouter(tags=["stream"])
+CONNECT_TIMEOUT_SEC = 15.0
 
 
 class ConnectRequest(BaseModel):
@@ -26,19 +27,23 @@ def list_presets():
 
 
 @router.post("/api/stream/connect")
-def connect_stream(req: ConnectRequest):
+async def connect_stream(req: ConnectRequest):
+    if not req.source and not req.preset_id:
+        raise HTTPException(400, "Provide source or preset_id")
     try:
-        if not req.source and not req.preset_id:
-            from fastapi import HTTPException
-            raise HTTPException(400, "Provide source or preset_id")
-        return stream_manager.connect(
-            req.source or "",
-            req.location,
-            req.targets,
-            req.preset_id,
+        return await asyncio.wait_for(
+            asyncio.to_thread(
+                stream_manager.connect,
+                req.source or "",
+                req.location,
+                req.targets,
+                req.preset_id,
+            ),
+            timeout=CONNECT_TIMEOUT_SEC,
         )
+    except TimeoutError:
+        raise HTTPException(504, f"Camera connection timed out after {CONNECT_TIMEOUT_SEC:.0f} seconds")
     except Exception as e:
-        from fastapi import HTTPException
         raise HTTPException(400, str(e))
 
 
@@ -145,6 +150,11 @@ async def stream_frames_ws(websocket: WebSocket):
 @router.get("/api/logs")
 def logs(limit: int = 50, source: str | None = None):
     return get_logs(limit, source)
+
+
+@router.delete("/api/logs")
+def delete_logs(source: str | None = None):
+    return clear_logs(source)
 
 
 @router.get("/api/logs/export")

@@ -1,3 +1,4 @@
+import glob
 import os
 import shutil
 import subprocess
@@ -176,11 +177,30 @@ def get_job(job_id: str) -> dict | None:
     return _public_job(job)
 
 
+def _find_ffmpeg() -> str | None:
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg:
+        return ffmpeg
+
+    # GUI launchers and already-open terminals do not inherit user PATH
+    # changes made after they started. Check the standard per-user install
+    # location as a fallback so browser-compatible output is still produced.
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        install_root = os.path.join(local_app_data, "Programs", "FFmpeg")
+        candidates = [os.path.join(install_root, "bin", "ffmpeg.exe")]
+        candidates.extend(glob.glob(os.path.join(install_root, "ffmpeg-*", "bin", "ffmpeg.exe")))
+        for candidate in sorted(candidates, reverse=True):
+            if os.path.isfile(candidate):
+                return candidate
+    return None
+
+
 def _finalize_for_browser(src_path: str, job_id: str) -> str:
     if not os.path.isfile(src_path):
         return src_path
     web_path = os.path.join(UPLOAD_DIR, f"output_{job_id}_web.mp4")
-    ffmpeg = shutil.which("ffmpeg")
+    ffmpeg = _find_ffmpeg()
     if not ffmpeg:
         print("[DHRISHTI] ffmpeg not found — browser may not play mp4v output")
         return src_path

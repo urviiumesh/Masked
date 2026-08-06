@@ -13,6 +13,7 @@ export default function Livestream() {
   const [error, setError] = useState('')
   const [presets, setPresets] = useState<CameraPreset[]>([])
   const [connecting, setConnecting] = useState(false)
+  const [clearingLogs, setClearingLogs] = useState(false)
   const [frameUrl, setFrameUrl] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
   const frameWsRef = useRef<WebSocket | null>(null)
@@ -89,8 +90,8 @@ export default function Livestream() {
   }, [])
 
   useEffect(() => {
-    loadPersons()
-    loadLogs()
+    loadPersons().catch((e) => setError(e instanceof Error ? e.message : 'Could not load persons'))
+    loadLogs().catch((e) => setError(e instanceof Error ? e.message : 'Could not load detection logs'))
     api.listStreamPresets().then(setPresets).catch(() => {})
     api.streamStatus().then((s) => {
       setConnected(s.connected)
@@ -156,6 +157,20 @@ export default function Livestream() {
     await api.disconnectStream()
     setConnected(false)
     setStatus(null)
+  }
+
+  const handleClearLogs = async () => {
+    if (!window.confirm('Delete all livestream detection logs and captured snapshots? This cannot be undone.')) return
+    setError('')
+    setClearingLogs(true)
+    try {
+      await api.clearLogs('livestream')
+      setLogs([])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not clear detection logs')
+    } finally {
+      setClearingLogs(false)
+    }
   }
 
   const toggleTarget = async (name: string) => {
@@ -301,9 +316,14 @@ export default function Livestream() {
           title="Detection Logs"
           count={logs.length}
           action={
-            <SecondaryButton onClick={() => api.exportLogs('livestream')} icon="download">
-              Export .xlsx
-            </SecondaryButton>
+            <div className="flex items-center gap-2">
+              <DangerButton onClick={handleClearLogs} disabled={clearingLogs} className="!min-h-8 !px-3 !py-1.5 text-xs">
+                {clearingLogs ? 'Clearing…' : 'Clear logs'}
+              </DangerButton>
+              <SecondaryButton onClick={() => api.exportLogs('livestream')} icon="download">
+                Export .xlsx
+              </SecondaryButton>
+            </div>
           }
         />
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3">

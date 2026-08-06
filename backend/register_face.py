@@ -56,6 +56,17 @@ def _create_app(
         cid = -1 if providers == ["CPUExecutionProvider"] else (ctx_id if ctx_id is not None else ctx_id_for_provider())
     app = FaceAnalysis(allowed_modules=["detection", "recognition"], **kwargs)
     app.prepare(ctx_id=cid, det_thresh=det_thresh, det_size=det_size)
+    if os.environ.get("DHRISHTI_REQUIRE_GPU", "").strip().lower() in {"1", "true", "yes", "on"}:
+        session_providers = {
+            provider
+            for model in app.models.values()
+            for provider in getattr(getattr(model, "session", None), "get_providers", lambda: [])()
+        }
+        if not session_providers.intersection({"CUDAExecutionProvider", "TensorrtExecutionProvider"}):
+            raise RuntimeError(
+                "GPU execution was required, but InsightFace initialized CPU-only sessions. "
+                f"Session providers: {sorted(session_providers)}"
+            )
     return app
 
 

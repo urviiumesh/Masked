@@ -61,6 +61,20 @@ describe('api client', () => {
     expect(fetchMock.mock.calls[0][1].method).toBe('DELETE')
   })
 
+  it('clearLogs uses DELETE and scopes the source', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ deleted: 2, deleted_snapshots: 1 }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const out = await api.clearLogs('livestream')
+
+    expect(out).toEqual({ deleted: 2, deleted_snapshots: 1 })
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/logs?source=livestream')
+    expect(fetchMock.mock.calls[0][1].method).toBe('DELETE')
+  })
+
   it('mjpegUrl includes cache buster', () => {
     const url = api.mjpegUrl()
     expect(url.startsWith('/api/stream/mjpeg?t=')).toBe(true)

@@ -1,5 +1,5 @@
 insightface==0.7.3
-numpy
+numpy==1.26.4
 opencv-python
 fastapi
 uvicorn[standard]
@@ -9,7 +9,14 @@ aiofiles
 
 # GPU acceleration (pick ONE onnxruntime package):
 # Windows Intel / AMD / NVIDIA (DirectML) — recommended default for this project:
-onnxruntime-directml
+onnxruntime-gpu==1.22.0
+nvidia-cuda-runtime-cu12
+nvidia-cublas-cu12
+nvidia-cudnn-cu12
+nvidia-cufft-cu12
+nvidia-curand-cu12
+nvidia-cusolver-cu12
+nvidia-cusparse-cu12
 # NVIDIA CUDA (Linux/Windows with CUDA toolkit installed):
 #   pip uninstall -y onnxruntime onnxruntime-directml
 #   pip install onnxruntime-gpu

@@ -5,8 +5,8 @@ from typing import Any
 
 
 PROVIDER_PRIORITY = [
-    "TensorrtExecutionProvider",
     "CUDAExecutionProvider",
+    "TensorrtExecutionProvider",
     "DmlExecutionProvider",
     "OpenVINOExecutionProvider",
     "CoreMLExecutionProvider",
@@ -17,6 +17,10 @@ PROVIDER_PRIORITY = [
 def _env_force() -> str | None:
     forced = os.environ.get("DHRISHTI_ORT_PROVIDER", "").strip()
     return forced or None
+
+
+def _require_gpu() -> bool:
+    return os.environ.get("DHRISHTI_REQUIRE_GPU", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 @lru_cache(maxsize=1)
@@ -35,6 +39,11 @@ def select_providers() -> list[str]:
     if forced:
         if forced in available:
             return [forced, "CPUExecutionProvider"] if forced != "CPUExecutionProvider" else ["CPUExecutionProvider"]
+        if _require_gpu():
+            raise RuntimeError(
+                f"Required ONNX Runtime GPU provider {forced!r} is unavailable. "
+                f"Available providers: {available}"
+            )
         return ["CPUExecutionProvider"]
 
     chosen: list[str] = []
@@ -44,6 +53,8 @@ def select_providers() -> list[str]:
     if "CPUExecutionProvider" not in chosen:
         chosen.append("CPUExecutionProvider")
     if not chosen:
+        if _require_gpu():
+            raise RuntimeError(f"GPU execution is required, but no GPU provider is available: {available}")
         chosen = ["CPUExecutionProvider"]
     return chosen
 
