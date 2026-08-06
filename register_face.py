@@ -84,6 +84,38 @@ def augment_image(src_path: str, dest_path: str, app: FaceAnalysis = None) -> No
     cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), -1)
     cv2.imwrite(dest_path, img)
 
+def augment_mask_image(src_path: str, dest_path: str, app: FaceAnalysis = None) -> None:
+    """Create a synthetic lower-face mask occlusion (surgical mask covering nose & mouth) and save it."""
+    if app is None:
+        app = get_app()
+    img = cv2.imread(src_path)
+    if img is None:
+        raise ValueError(f"Unable to read image for mask augmentation: {src_path}")
+    faces = app.get(img)
+    if len(faces) == 0:
+        raise ValueError("No face detected for mask augmentation.")
+    face = faces[0]
+    if not hasattr(face, "kps") or face.kps is None:
+        raise ValueError("Landmarks not available for mask augmentation.")
+    landmarks = face.kps  # shape (5, 2)
+    # Keypoints: 0=left_eye, 1=right_eye, 2=nose, 3=left_mouth, 4=right_mouth
+    nose = landmarks[2]
+    left_mouth = landmarks[3]
+    right_mouth = landmarks[4]
+    
+    # Compute bounding polygon/box for lower face (covering from nose bridge down to chin)
+    bbox = face.bbox.astype(int)
+    x1, y1, x2, y2 = bbox
+    
+    mask_y1 = int(nose[1] - (nose[1] - min(landmarks[0][1], landmarks[1][1])) * 0.2)
+    mask_y2 = y2
+    mask_x1 = max(0, x1)
+    mask_x2 = min(img.shape[1], x2)
+    
+    # Draw dark mask rectangle/polygon over lower face
+    cv2.rectangle(img, (mask_x1, mask_y1), (mask_x2, mask_y2), (30, 30, 30), -1)
+    cv2.imwrite(dest_path, img)
+
 def generate_embeddings(name: str, db_root: str, emb_root: str, known_embedding: np.ndarray = None, app: FaceAnalysis = None) -> np.ndarray:
     """Compute embeddings for *all* images in the person's folder and store them.
     The resulting .npy file is saved to `emb_root/<name>.npy` with shape (N, 512).
@@ -134,16 +166,24 @@ def register_face(name: str, image_path: str, db_root: str = DEFAULT_DB_ROOT, em
     dest_original = copy_image_to_folder(name, image_path, db_root)
     print(f"Original image copied to {dest_original}")
 
-    # Create occluded version
+    # Create eye occluded version (sunglasses)
     base, ext = os.path.splitext(dest_original)
     occluded_path = f"{base}_occluded{ext}"
     try:
         augment_image(dest_original, occluded_path, app=app)
-        print(f"Occluded image created at {occluded_path}")
+        print(f"Eye occluded image created at {occluded_path}")
     except Exception as e:
-        print(f"Warning: could not create occluded image – {e}")
+        print(f"Warning: could not create eye occluded image – {e}")
 
-    # Regenerate embeddings for this person (includes original + occluded)
+    # Create lower-face mask occluded version (surgical mask)
+    mask_path = f"{base}_mask{ext}"
+    try:
+        augment_mask_image(dest_original, mask_path, app=app)
+        print(f"Lower-face mask image created at {mask_path}")
+    except Exception as e:
+        print(f"Warning: could not create lower-face mask image – {e}")
+
+    # Regenerate embeddings for this person (includes original + eye occluded + mask occluded)
     return generate_embeddings(name, db_root, emb_root, known_embedding, app=app)
 
 if __name__ == "__main__":
