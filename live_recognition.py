@@ -10,8 +10,8 @@ app.prepare(ctx_id=-1, det_size=(640, 640))
 # Database path for known faces
 REAL_FACES_DB = "faces_db"
 
-# Thresholds tuned for high accuracy
-RECOGNITION_THRESHOLD = 0.40  # Minimum similarity score to match a known face
+# Thresholds tuned for high accuracy (0.35 tuned for masks & sunglasses detection)
+RECOGNITION_THRESHOLD = 0.35  # Minimum similarity score to match a known face
 HIGH_CONF_THRESHOLD = 0.55   # Minimum similarity score to safely learn new view in memory
 
 def load_database():

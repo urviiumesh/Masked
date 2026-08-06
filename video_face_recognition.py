@@ -1,256 +1,145 @@
 import cv2
-import insightface
-from insightface.app import FaceAnalysis
 import numpy as np
+from insightface.app import FaceAnalysis
 import os
-import time
-from register_face import register_face
+import sys
 
-# Initialize Face Analysis
-app = FaceAnalysis(name="buffalo_l")
-app.prepare(ctx_id=0, det_size=(640, 640))
+# Initialize Face Analysis (same as live_recognition.py)
+app = FaceAnalysis(allowed_modules=['detection', 'recognition'])
+app.prepare(ctx_id=-1, det_size=(640, 640))
 
+# Database path for registered faces
 REAL_FACES_DB = "faces_db"
-TEMP_DB_ROOT = "temp_face_database"
-TEMP_EMB_ROOT = "temp_faces_db"
 
-# Ensure temp directories exist
-os.makedirs(TEMP_DB_ROOT, exist_ok=True)
-os.makedirs(TEMP_EMB_ROOT, exist_ok=True)
-
-# Global database
-db = {}
+# Thresholds tuned for high accuracy (0.35 tuned for mask & sunglasses detection)
+RECOGNITION_THRESHOLD = 0.35  # Minimum similarity score to match a known face
+HIGH_CONF_THRESHOLD = 0.55   # Minimum similarity score to safely learn new view in memory
 
 def load_database():
-    global db
     db = {}
-    
-    # Load real faces
     if os.path.exists(REAL_FACES_DB):
         for file in os.listdir(REAL_FACES_DB):
             if file.endswith(".npy"):
                 name = file.replace(".npy", "")
                 db[name] = np.load(os.path.join(REAL_FACES_DB, file))
-    
-    # Load temp faces
-    if os.path.exists(TEMP_EMB_ROOT):
-        for file in os.listdir(TEMP_EMB_ROOT):
-            if file.endswith(".npy"):
-                name = file.replace(".npy", "")
-                db[name] = np.load(os.path.join(TEMP_EMB_ROOT, file))
-    
-    print(f"Loaded {len(db)} faces from database")
+    return db
 
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-def recognize_face(face_embedding):
-    best_match = "Unknown"
-    best_score = 0.0
-    
-    for name, db_emb in db.items():
-        if db_emb.ndim == 1:
-            score = cosine_similarity(face_embedding, db_emb)
-        else:
-            scores = [cosine_similarity(face_embedding, view) for view in db_emb]
-            score = max(scores) if scores else 0.0
+def process_video(input_path="input_video.mp4", output_path="output_recognized.mp4", display=False):
+    if not os.path.isfile(input_path):
+        print(f"[ERROR] Input video file not found: {input_path}")
+        return
 
-        if score > best_score:
-            best_score = score
-            best_match = name
-            
-    # Threshold
-    # Dynamic Thresholding is handled in the main loop now, but we return the best match here
-    # We can just return the match and let the loop decide based on the name
-    return best_match, best_score
+    db = load_database()
+    print(f"[INFO] Loaded {len(db)} known face(s) from database: {list(db.keys())}")
 
-def get_next_unknown_id():
-    # Find all folders starting with "unknown_"
-    existing = [d for d in os.listdir(TEMP_DB_ROOT) if os.path.isdir(os.path.join(TEMP_DB_ROOT, d)) and d.startswith("unknown_")]
-    if not existing:
-        return 1
-    
-    # Extract numbers
-    ids = []
-    for d in existing:
-        try:
-            ids.append(int(d.split("_")[1]))
-        except (IndexError, ValueError):
-            pass
-    
-    return max(ids) + 1 if ids else 1
+    cap = cv2.VideoCapture(input_path)
+    if not cap.isOpened():
+        print(f"[ERROR] Could not open video file: {input_path}")
+        return
 
-# Initial load
-load_database()
+    # Video parameters
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-# Video paths
-input_path = "input_video.mp4"
-output_path = "output_recognized.mp4"
+    out = cv2.VideoWriter(output_path, fourcc, fps, (w, h))
+    print(f"[INFO] Processing {total_frames} frames from '{input_path}'...")
 
-cap = cv2.VideoCapture(input_path)
-if not cap.isOpened():
-    raise Exception(f"Error opening video file {input_path}")
+    dirty_faces = set()
+    frame_idx = 0
 
-# Setup video writer
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-fps = cap.get(cv2.CAP_PROP_FPS)
-w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-out = cv2.VideoWriter(output_path, fourcc, fps, (w, h))
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-print(f"Processing {frame_count} frames...")
+            frame_idx += 1
+            if frame_idx % 30 == 0 or frame_idx == total_frames:
+                print(f"  Processing frame {frame_idx}/{total_frames}...")
 
-# Main processing loop
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+            # Detect faces from the frame
+            faces = app.get(frame)
+            for face in faces:
+                x1, y1, x2, y2 = face.bbox.astype(int)
+                emb = face.embedding
 
-    faces = app.get(frame)
-    for face in faces:
-        bbox = face.bbox.astype(int)
-        x1, y1, x2, y2 = bbox
-        best_match, score = recognize_face(face.normed_embedding)
-        
-        # Dynamic Thresholding
-        if best_match.startswith("unknown"):
-            threshold = 0.35
-        else:
-            # 0.30 is better to avoid false positives (0.25 was too lenient)
-            threshold = 0.30
-            
-        if score > threshold:
-            name = best_match
-        else:
-            name = "Unknown"
-        
-        # ONLINE LEARNING
-        if name != "Unknown":
-            # Update the database with this new view
-            if name in db:
-                current_db_emb = db[name]
-                if current_db_emb.ndim == 1:
-                    current_db_emb = np.expand_dims(current_db_emb, axis=0)
-                
-                # Add new embedding
-                updated_emb = np.vstack([current_db_emb, face.normed_embedding])
-                
-                # Limit to last 50 embeddings
-                if len(updated_emb) > 50:
-                    updated_emb = updated_emb[-50:]
-                
-                db[name] = updated_emb
-                
-                # If it's an unknown person, persist to disk
-                if name.startswith("unknown"):
+                # Find best match in known database
+                best_match = None
+                best_score = 0.0
+
+                for name, db_emb in db.items():
+                    if db_emb.ndim == 1:
+                        score = cosine_similarity(emb, db_emb)
+                    else:
+                        scores = [cosine_similarity(emb, view) for view in db_emb]
+                        score = max(scores) if scores else 0.0
+
+                    if score > best_score:
+                        best_score = score
+                        best_match = name
+
+                # Only draw bounding box and label if recognized as a KNOWN face
+                if best_match and best_score >= RECOGNITION_THRESHOLD:
+                    color = (0, 255, 0)  # Green box for known face
+                    label = f"{best_match} ({best_score:.2f})"
+
+                    # Safe Online Learning: Only add view if match confidence is very high (>= 0.55)
+                    if best_score >= HIGH_CONF_THRESHOLD:
+                        current_db_emb = db[best_match]
+                        if current_db_emb.ndim == 1:
+                            current_db_emb = np.expand_dims(current_db_emb, axis=0)
+
+                        updated_emb = np.vstack([current_db_emb, emb])
+                        if len(updated_emb) > 50:
+                            updated_emb = updated_emb[-50:]
+
+                        db[best_match] = updated_emb
+                        dirty_faces.add(best_match)
+
+                    # Draw bounding box and label ONLY for known faces
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(frame, label, (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                # If unknown (best_score < RECOGNITION_THRESHOLD), no bounding box is drawn at all!
+
+            out.write(frame)
+
+            if display:
+                cv2.imshow("Video Face Recognition", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+    finally:
+        # Save updated multi-view embeddings for registered faces on video completion
+        if dirty_faces:
+            print(f"[INFO] Saving updated embeddings for {len(dirty_faces)} profile(s)...")
+            for name in dirty_faces:
+                if name in db:
                     try:
-                        npy_path = os.path.join(TEMP_EMB_ROOT, f"{name}.npy")
-                        np.save(npy_path, updated_emb)
+                        npy_path = os.path.join(REAL_FACES_DB, f"{name}.npy")
+                        np.save(npy_path, db[name])
+                        print(f"  Saved updated embeddings for '{name}'.")
                     except Exception as e:
-                        print(f"Failed to update persistent DB for {name}: {e}")
-        
-        if name == "Unknown":
-             # Handle new unknown face
-            # print(f"New unknown face detected (score: {score:.2f})")
-            
-            # Crop the face with padding
-            h, w, _ = frame.shape
-            pad_w = int((x2 - x1) * 0.25)
-            pad_h = int((y2 - y1) * 0.25)
-            crop_x1 = max(0, x1 - pad_w)
-            crop_y1 = max(0, y1 - pad_h)
-            crop_x2 = min(w, x2 + pad_w)
-            crop_y2 = min(h, y2 + pad_h)
-            
-            face_crop = frame[crop_y1:crop_y2, crop_x1:crop_x2]
-            
-            # STRICT VALIDATION: Check if crop actually has a face
-            crop_faces = app.get(face_crop)
-            if len(crop_faces) == 0:
-                print(f"Skipping unknown registration: No face detected in crop (False Positive).")
-                continue
-                
-            # RE-VERIFICATION: Check if crop embedding matches anyone
-            crop_emb = crop_faces[0].embedding
-            check_match, check_score = recognize_face(crop_emb)
-            
-            # Check thresholds again for the crop
-            check_threshold = 0.35 if check_match.startswith("unknown") else 0.30
-            
-            if check_score > check_threshold:
-                print(f"Crop matched {check_match} ({check_score:.2f})! Updating instead of registering new.")
-                
-                # It's a match! Update DB (Online Learning)
-                if check_match in db:
-                    current_db_emb = db[check_match]
-                    if current_db_emb.ndim == 1:
-                        current_db_emb = np.expand_dims(current_db_emb, axis=0)
-                    updated_emb = np.vstack([current_db_emb, crop_emb])
-                    if len(updated_emb) > 50:
-                        updated_emb = updated_emb[-50:]
-                    db[check_match] = updated_emb
-                    
-                    if check_match.startswith("unknown"):
-                        try:
-                            np.save(os.path.join(TEMP_EMB_ROOT, f"{check_match}.npy"), updated_emb)
-                        except: pass
-                
-                # Draw label for the re-verified match
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                text_y = y2 + 25
-                cv2.putText(frame, f"{check_match} ({check_score:.2f})", (x1, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-                continue
+                        print(f"  Failed to save embeddings for {name}: {e}")
 
-            # If we get here, it is GENUINELY a new unknown person
-            print(f"New unknown face detected (score: {score:.2f})")
-            
-            # Generate new name
-            new_id = get_next_unknown_id()
-            new_name = f"unknown_{new_id}"
-            
-            # Save current frame to temp file with DESIRED filename
-            temp_img_path = f"{new_name}.jpg"
-            cv2.imwrite(temp_img_path, face_crop)
-            
-            try:
-                print(f"Registering new person: {new_name}")
-                
-                # Pass the current embedding to ensure registration succeeds even if crop is bad
-                # Use face.normed_embedding which we already have
-                new_embeddings = register_face(new_name, temp_img_path, TEMP_DB_ROOT, TEMP_EMB_ROOT, known_embedding=face.normed_embedding)
-                
-                # Update in-memory database IMMEDIATELY
-                db[new_name] = new_embeddings
-                
-                # Update for this frame
-                name = new_name
-                
-            except Exception as e:
-                print(f"Failed to register unknown face: {e}")
-                
-                # Cleanup failed registration
-                try:
-                    import shutil
-                    failed_folder = os.path.join(TEMP_DB_ROOT, new_name)
-                    if os.path.exists(failed_folder):
-                        shutil.rmtree(failed_folder)
-                    if new_name in db:
-                        del db[new_name]
-                except Exception as cleanup_e:
-                    print(f"Cleanup failed: {cleanup_e}")
-            
-            # Clean up temp file
-            if os.path.exists(temp_img_path):
-                os.remove(temp_img_path)
+        cap.release()
+        out.release()
+        if display:
+            cv2.destroyAllWindows()
 
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        text_y = y2 + 25  # place text below the bounding box
-        cv2.putText(frame, f"{name} ({score:.2f})", (x1, text_y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+    print(f"\n[SUCCESS] Processed video saved to: {output_path}")
 
-    out.write(frame)
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        in_path = sys.argv[1]
+    else:
+        in_path = "input_video.mp4"
 
-cap.release()
-out.release()
-print(f"Face recognition video saved as {output_path}")
+    out_path = sys.argv[2] if len(sys.argv) > 2 else "output_recognized.mp4"
+    process_video(in_path, out_path)
