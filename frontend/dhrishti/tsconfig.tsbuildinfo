@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/client.ts","./src/components/specularbutton.tsx","./src/components/topnav.tsx","./src/components/ui.tsx","./src/pages/facedatabase.tsx","./src/pages/livestream.tsx","./src/pages/videoprocessing.tsx"],"version":"5.9.3"}

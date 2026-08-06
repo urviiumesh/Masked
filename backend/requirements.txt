@@ -1,0 +1,18 @@
+insightface==0.7.3
+numpy
+opencv-python
+fastapi
+uvicorn[standard]
+python-multipart
+openpyxl
+aiofiles
+
+# GPU acceleration (pick ONE onnxruntime package):
+# Windows Intel / AMD / NVIDIA (DirectML) — recommended default for this project:
+onnxruntime-directml
+# NVIDIA CUDA (Linux/Windows with CUDA toolkit installed):
+#   pip uninstall -y onnxruntime onnxruntime-directml
+#   pip install onnxruntime-gpu
+# CPU-only fallback:
+#   pip uninstall -y onnxruntime-directml onnxruntime-gpu
+#   pip install onnxruntime

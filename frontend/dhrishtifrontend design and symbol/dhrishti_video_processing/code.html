@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DHRISHTI - Video Processing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "on-error-container": "#ffdad6",
+                        "critical": "#EF4444",
+                        "on-primary-container": "#636900",
+                        "tertiary-container": "#98f1fa",
+                        "on-background": "#e5e2e1",
+                        "inverse-surface": "#e5e2e1",
+                        "on-secondary-container": "#99bbe4",
+                        "surface-bright": "#3a3939",
+                        "surface-tint": "#c3d000",
+                        "tertiary-fixed-dim": "#7bd4dd",
+                        "on-secondary-fixed-variant": "#25496c",
+                        "on-tertiary-fixed-variant": "#004f55",
+                        "on-surface-variant": "#c8c8ac",
+                        "on-tertiary-fixed": "#002022",
+                        "surface-container": "#201f1f",
+                        "on-primary": "#2f3300",
+                        "surface-variant": "#353534",
+                        "on-primary-fixed-variant": "#454a00",
+                        "secondary": "#a7caf3",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-high": "#2a2a2a",
+                        "border": "#27272A",
+                        "text-primary": "#EDEDED",
+                        "surface-dim": "#131313",
+                        "tertiary-fixed": "#98f1fa",
+                        "secondary-fixed": "#d0e4ff",
+                        "success": "#10B981",
+                        "on-primary-fixed": "#1b1d00",
+                        "on-tertiary": "#00363b",
+                        "primary-fixed-dim": "#c3d000",
+                        "surface-container-lowest": "#0e0e0e",
+                        "inverse-primary": "#5d6300",
+                        "background": "#131313",
+                        "primary-container": "#dfed1a",
+                        "error": "#ffb4ab",
+                        "surface": "#121212",
+                        "on-error": "#690005",
+                        "on-tertiary-container": "#006f77",
+                        "primary-fixed": "#dfed1a",
+                        "on-surface": "#e5e2e1",
+                        "outline": "#929279",
+                        "secondary-fixed-dim": "#a7caf3",
+                        "text-secondary": "#A1A1AA",
+                        "on-secondary-fixed": "#001d35",
+                        "primary": "#ffffff",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary": "#063254",
+                        "surface-container-highest": "#353534",
+                        "secondary-container": "#274b6e",
+                        "tertiary": "#ffffff",
+                        "outline-variant": "#474833"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1920px",
+                        "gutter": "16px",
+                        "panel-gap": "1px",
+                        "unit": "4px",
+                        "margin-page": "24px"
+                    },
+                    "fontFamily": {
+                        "data-technical": ["Geist Mono", "monospace"],
+                        "label-mono": ["Geist Mono", "monospace"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "data-technical": ["13px", { "lineHeight": "1.4", "fontWeight": "400" }],
+                        "label-mono": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #EDEDED;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar for technical feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A0A0A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272A;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3F3F46;
+        }
+
+        /* Glare Effect */
+        .glare-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .glare-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent,
+                rgba(255, 255, 255, 0.05),
+                transparent
+            );
+            transform: skewX(-25deg);
+            transition: left 0.5s ease-in-out;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .glare-card:hover::before {
+            left: 150%;
+        }
+
+        /* Spotlight Effect Base */
+        .spotlight-card {
+            position: relative;
+        }
+        .spotlight-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1;
+            border-radius: inherit;
+        }
+        .spotlight-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Dashboard specific layout utilities */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 1px; /* 1px panel gap as per system */
+            background-color: #27272A; /* Acts as the border color between panels */
+            min-height: calc(100vh - 64px);
+        }
+        
+        .panel {
+            background-color: #121212;
+            padding: 24px;
+        }
+
+        /* Glowing Border effect */
+        .border-glow-focus:focus-within {
+            box-shadow: inset 0 0 0 1px #ffffff;
+            border-color: #ffffff;
+        }
+
+        .border-glow-hover:hover {
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        /* Shimmer for active tab */
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .text-shimmer {
+            background: linear-gradient(90deg, #EDEDED 0%, #ffffff 50%, #EDEDED 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+        }
+        
+        /* Bounding box animation */
+        @keyframes pulse-box {
+            0% { border-color: rgba(255,255,255,0.5); }
+            50% { border-color: rgba(255,255,255,1); }
+            100% { border-color: rgba(255,255,255,0.5); }
+        }
+        .bounding-box {
+            animation: pulse-box 2s infinite;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2) inset, 0 0 10px rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body class="antialiased font-body-md text-body-md text-text-primary selection:bg-surface-tint selection:text-background">
+<!-- TopNavBar -->
+<nav class="bg-background dark:bg-background border-b border-outline-variant dark:border-outline-variant docked full-width top-0 z-50 relative h-16 w-full flex items-center justify-start px-margin-page gap-12">
+<div class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary shrink-0 uppercase">
+            DHRISHTI
+        </div>
+<div class="flex items-end h-full gap-8">
+<a class="h-full flex items-center text-text-secondary dark:text-text-secondary pb-1 border-b-2 border-transparent hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">
+<span class="mt-1">Livestream</span>
+</a>
+<a class="h-full flex items-center text-primary dark:text-primary border-b-2 border-surface-tint pb-1 opacity-80 transition-opacity" href="#">
+<span class="text-shimmer font-medium mt-1">Video Processing</span>
+</a>
+<a class="h-full flex items-center text-text-secondary dark:text-text-secondary pb-1 border-b-2 border-transparent hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">
+<span class="mt-1">Face Database</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Grid -->
+<main class="dashboard-grid w-full">
+<!-- Left Column (4 cols) -->
+<div class="panel col-span-12 lg:col-span-4 flex flex-col gap-6 border-r border-border h-full overflow-y-auto">
+<!-- Upload Zone -->
+<div class="flex flex-col gap-3">
+<h2 class="font-label-mono text-label-mono text-text-secondary uppercase tracking-widest">Input Source</h2>
+<div class="glare-card spotlight-card border border-dashed border-border rounded flex flex-col items-center justify-center p-8 bg-surface-dim cursor-pointer transition-all duration-300 border-glow-hover h-48 group">
+<span class="material-symbols-outlined text-4xl text-text-secondary group-hover:text-primary transition-colors duration-300 mb-3" data-weight="fill" style="font-variation-settings: 'FILL' 0;">
+                        video_file
+                    </span>
+<span class="font-body-md text-body-md text-text-primary text-center">Drag &amp; Drop video file here</span>
+<span class="font-data-technical text-data-technical text-text-secondary mt-1">or click to browse (.mp4, .mkv)</span>
+</div>
+</div>
+<!-- Target Selection -->
+<div class="flex flex-col gap-3 flex-grow min-h-0">
+<div class="flex items-center justify-between">
+<h2 class="font-label-mono text-label-mono text-text-secondary uppercase tracking-widest">Select Targets to Detect</h2>
+<span class="font-label-mono text-label-mono bg-surface-container-high px-2 py-0.5 rounded text-text-secondary">2 Selected</span>
+</div>
+<!-- Search -->
+<div class="relative w-full border-glow-focus rounded border border-border bg-surface-dim transition-colors">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-lg" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full bg-transparent border-none py-2.5 pl-10 pr-3 font-body-md text-body-md text-text-primary placeholder:text-text-secondary focus:ring-0" placeholder="Search database..." type="text"/>
+</div>
+<!-- Target List -->
+<div class="flex flex-col gap-2 overflow-y-auto pr-2 pb-2 mt-2 custom-scrollbar">
+<!-- Selected Card 1 -->
+<div class="glare-card spotlight-card flex items-center p-3 rounded bg-surface-container border border-primary opacity-100 cursor-pointer transition-all">
+<input checked="" class="form-checkbox h-4 w-4 text-surface-tint border-border bg-surface-dim rounded-sm focus:ring-0 focus:ring-offset-0 mr-4 cursor-pointer" type="checkbox"/>
+<img class="w-10 h-10 rounded object-cover grayscale border border-border mr-4" data-alt="A stark, high-contrast, black-and-white mugshot-style portrait of a Caucasian male in his 30s with short hair. Harsh, dramatic lighting from the top left creates deep shadows. The background is a solid, completely untextured dark gray. The image feels like a high-resolution security file photograph." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmVJQ4IcusnDLLI2ffVlGDVQLTUqWws_kE5nKjDHLFCc2GnSFCL73hvkFxRINqOMXhHGW74SG8Zg15UuwFc5ZLRs7yvw8ZnBxIP-YEbKN0b8DkPqW5wDsS9TuITPPXfQ14zeDlEAfeqRnNaT1B8tr0lMIOAwmMGgjX9Mby6RG2jX3cQGpCqE4gq_H-b2VL7Vug7Qnz7x7mpabQ-hy3cm54k0cOMbYojsoPhc7RDr7DttvkRqLmNOAv"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary font-medium">TGT-8924-A</span>
+<span class="font-data-technical text-data-technical text-text-secondary">Unknown Subject Alpha</span>
+</div>
+</div>
+<!-- Selected Card 2 -->
+<div class="glare-card spotlight-card flex items-center p-3 rounded bg-surface-container border border-primary opacity-100 cursor-pointer transition-all">
+<input checked="" class="form-checkbox h-4 w-4 text-surface-tint border-border bg-surface-dim rounded-sm focus:ring-0 focus:ring-offset-0 mr-4 cursor-pointer" type="checkbox"/>
+<img class="w-10 h-10 rounded object-cover grayscale border border-border mr-4" data-alt="A clinical, extreme close-up portrait of an Asian female with dark hair pulled back. The lighting is cold, uniform, and slightly bluish, simulating a high-tech surveillance camera feed. The subject maintains a neutral, emotionless expression. The background is pitch black." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh0t9HRat9MYFR5pE6bTdD8oVdoSLnubSGXfYRa08LqwNM-XxBG4g2YbALC-nmE7LWd81Icl83LNlaS5uWzNhmp5ibziiJCewQHBgFDqCqBvvibgxkhHQZTWmj5dh2yNa_3I_BIwIcrLlz_5xC-fj8_iGnI_IYsrEMiKZmPa2k-3boqNrjbpgu58PsHijmR4Lq34ZgKm3JpA3JlXQw84g4QeqSsLi5yWA5S8UEhrqcVya7voOmddgA"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary font-medium">TGT-4419-X</span>
+<span class="font-data-technical text-data-technical text-text-secondary">POI-Delta-Node</span>
+</div>
+</div>
+<!-- Unselected Card 1 -->
+<div class="glare-card spotlight-card flex items-center p-3 rounded bg-surface-dim border border-border opacity-60 hover:opacity-100 hover:border-surface-container-highest cursor-pointer transition-all">
+<input class="form-checkbox h-4 w-4 text-surface-tint border-border bg-surface-dim rounded-sm focus:ring-0 focus:ring-offset-0 mr-4 cursor-pointer" type="checkbox"/>
+<img class="w-10 h-10 rounded object-cover grayscale border border-border mr-4" data-alt="A grainy, slightly motion-blurred side-profile capture of a person wearing a dark hoodie. The image has a low-light security camera aesthetic with digital noise. High contrast between the dark figure and a dim, slate-gray background. Highly technical surveillance mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzyOGq0zTU1Mst0lO6fSCm2L0EJRafoHVYsJI1nyOkgGMGporQ6-iEdbakerIioH1ldZAyXaqW0xt-5jj0bV2foGgJCnHVonT1gMnGhh4WYIuxyZyvGZWBIcFI4ZV-ZbJjJJC4t8hUZsl8owEG0becvtyXebkF9RTtFbpg9AWAnj-eouokggOsA31iHotopE3JvImuczkLjJOJMFXJA__Vsx9zT_owrn3W8u8np-HGI8h4_-hbB19f"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary font-medium">TGT-1002-C</span>
+<span class="font-data-technical text-data-technical text-text-secondary">Unverified Entity</span>
+</div>
+</div>
+<!-- Unselected Card 2 -->
+<div class="glare-card spotlight-card flex items-center p-3 rounded bg-surface-dim border border-border opacity-60 hover:opacity-100 hover:border-surface-container-highest cursor-pointer transition-all">
+<input class="form-checkbox h-4 w-4 text-surface-tint border-border bg-surface-dim rounded-sm focus:ring-0 focus:ring-offset-0 mr-4 cursor-pointer" type="checkbox"/>
+<div class="w-10 h-10 rounded bg-surface-container-highest border border-border mr-4 flex items-center justify-center">
+<span class="material-symbols-outlined text-text-secondary text-sm">person</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary font-medium">NEW-QUERY-01</span>
+<span class="font-data-technical text-data-technical text-text-secondary">No visual data</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Primary CTA -->
+<div class="mt-auto pt-6 border-t border-border">
+<button class="w-full bg-primary text-background font-body-md text-body-md font-semibold py-3 px-4 rounded hover:bg-[#e0e0e0] transition-colors flex items-center justify-center gap-2 group glare-card">
+<span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                    Process Video
+                </button>
+</div>
+</div>
+<!-- Right Column (8 cols) -->
+<div class="panel col-span-12 lg:col-span-8 flex flex-col h-full overflow-hidden bg-background">
+<!-- Video Player Area -->
+<div class="w-full aspect-video bg-black relative border border-border rounded overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+<!-- Mock Video Content -->
+<div class="absolute inset-0 opacity-40 mix-blend-screen" data-alt="A simulated, high-tech security camera view of a crowded, sterile airport terminal or train station concourse. The color palette is monochrome, dominated by stark blacks, harsh whites, and varying shades of gray. The image feels slightly degraded, suggesting raw CCTV footage. High contrast lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA5PJkbbFjM_WSuzU7SLn8dz5c-1s-yELwm52xbOUahYp3gt5wOvtj8mVVklXZgXmzrA9tFx2oz0hX39BO__zTNADCgfvbCy_THj2G7cXenePlXK1UP9Hj3Z5ZgAIjU7bLDgZY0MKhipofNHoCJ0A7Wfs7cLP4ypU1c17Et1yIvS297CSYwRnaiGgQCPb_qZNeON3ObpSbZOKomcDrK0bgPrA75LtlxXy6SrQ4ygbvqiSwXpalfSK3c')"></div>
+<!-- Bounding Box Mock -->
+<div class="absolute top-[30%] left-[45%] w-[12%] h-[20%] border-2 border-white bounding-box rounded-sm pointer-events-none">
+<div class="absolute -top-6 left-0 bg-white text-black font-data-technical text-[10px] px-1 py-0.5 whitespace-nowrap">TGT-8924-A (98.4%)</div>
+<!-- Corner reticles -->
+<div class="absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 border-white"></div>
+<div class="absolute -top-1 -right-1 w-2 h-2 border-t-2 border-r-2 border-white"></div>
+<div class="absolute -bottom-1 -left-1 w-2 h-2 border-b-2 border-l-2 border-white"></div>
+<div class="absolute -bottom-1 -right-1 w-2 h-2 border-b-2 border-r-2 border-white"></div>
+</div>
+<!-- Overlay Info -->
+<div class="absolute top-4 right-4 flex flex-col items-end gap-1 pointer-events-none drop-shadow-md">
+<span class="font-data-technical text-data-technical text-white bg-black/50 px-2 py-0.5 rounded-sm border border-white/20 backdrop-blur-sm">REC // CH-04</span>
+<span class="font-data-technical text-data-technical text-white bg-black/50 px-2 py-0.5 rounded-sm border border-white/20 backdrop-blur-sm">1920x1080 @ 30FPS</span>
+</div>
+<!-- HUD / Scrubber -->
+<div class="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-black/90 to-transparent flex flex-col justify-end px-4 pb-3">
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden mb-3 relative cursor-pointer group">
+<div class="absolute top-0 left-0 h-full bg-surface-tint w-[42%]"></div>
+<!-- Playhead -->
+<div class="absolute top-1/2 -translate-y-1/2 left-[42%] w-2.5 h-2.5 bg-white rounded-full shadow-[0_0_5px_#fff] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<!-- Markers -->
+<div class="absolute top-0 h-full w-0.5 bg-critical left-[12%]"></div>
+<div class="absolute top-0 h-full w-0.5 bg-critical left-[25%]"></div>
+<div class="absolute top-0 h-full w-0.5 bg-critical left-[42%]"></div>
+<div class="absolute top-0 h-full w-0.5 bg-critical left-[78%]"></div>
+</div>
+<div class="flex justify-between items-center w-full">
+<div class="flex items-center gap-4">
+<button class="text-white hover:text-surface-tint transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</button>
+<span class="font-data-technical text-data-technical text-white drop-shadow">00:14:23 / 00:45:00</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined text-sm">settings</span></button>
+<button class="text-white/70 hover:text-white transition-colors"><span class="material-symbols-outlined text-sm">fullscreen</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Detections & Export Area -->
+<div class="mt-6 flex flex-col flex-grow h-0">
+<div class="flex justify-between items-end mb-4 border-b border-border pb-2">
+<h3 class="font-label-mono text-label-mono text-text-secondary uppercase tracking-widest">Detection Instances</h3>
+<div class="font-data-technical text-data-technical text-text-secondary">4 Logs Found</div>
+</div>
+<!-- Detection List -->
+<div class="flex flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar flex-grow">
+<!-- Instance 1 -->
+<div class="group spotlight-card flex items-center justify-between p-3 rounded bg-surface border border-border hover:border-surface-container-highest transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded overflow-hidden border border-border relative">
+<img class="w-full h-full object-cover" data-alt="A tight, low-resolution facial crop of a Caucasian male from security footage. Grayscale, stark contrast, noticeable pixelation and digital noise. Minimalistic and technical." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4sorDtG-yFTV-Vp5YZCFTz93WFyCBp_ocAY6k4r3uv2H4rOPX-z_EmNnO81DSUtDSptskvdxLZWVeEOZQwDV1VBccNkYvpm1uWycI2vSQhJ8vvQth7_7Ew0CahqlAmenxG45v2QLEXevZM0d9Vgq5diCuYigPAKaxeleL5SGm0YUcTlcDBmPe2qZT5dpWAADBuC9XDgfI3zrRPrUK9rB-pxnPAgn_lJRYQ7GuHUQW0Jvh_dJvAH0B"/>
+<div class="absolute inset-0 border border-critical opacity-50 mix-blend-overlay"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary">TGT-8924-A</span>
+<span class="font-data-technical text-[11px] text-text-secondary">Confidence: 98.4%</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-low px-2 py-1 rounded font-data-technical text-data-technical text-text-secondary border border-border">
+                                [00:14:23 - 00:15:02]
+                            </div>
+<button class="text-surface-tint font-label-mono text-[11px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:text-primary">
+                                Jump <span class="material-symbols-outlined text-[14px]">arrow_right_alt</span>
+</button>
+</div>
+</div>
+<!-- Instance 2 -->
+<div class="group spotlight-card flex items-center justify-between p-3 rounded bg-surface border border-border hover:border-surface-container-highest transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded overflow-hidden border border-border relative">
+<img class="w-full h-full object-cover" data-alt="A small, blurry facial crop of a Caucasian male, slightly different angle than previous. Grayscale, high surveillance aesthetic, heavy shadow on one side of the face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABtnA1RORFXpqZzVOqIcbLhKFMIOPY3Hzb5nsOhHINK_X21V1h0P7CrPL5Cj9MoZPl76hup2SKT3rvysmkxpJKSNE4P6IXYRlIkP56KLTb2DQF84Byej3mEVfEpV5CoTkuA3Qu2Bg1LcOMYlkpJqL6hd_3uFnKLFaeb8PGpoZlyVVhHbCnB8EgJE8byjMYhmbZqlIRONjEJTMLUWqLM8i67yhC0zKpu4nzb9ayXn8E85eZE3khMnsc"/>
+<div class="absolute inset-0 border border-critical opacity-50 mix-blend-overlay"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary">TGT-8924-A</span>
+<span class="font-data-technical text-[11px] text-text-secondary">Confidence: 91.2%</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-low px-2 py-1 rounded font-data-technical text-data-technical text-text-secondary border border-border">
+                                [00:08:45 - 00:09:12]
+                            </div>
+<button class="text-surface-tint font-label-mono text-[11px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:text-primary">
+                                Jump <span class="material-symbols-outlined text-[14px]">arrow_right_alt</span>
+</button>
+</div>
+</div>
+<!-- Instance 3 -->
+<div class="group spotlight-card flex items-center justify-between p-3 rounded bg-surface border border-border hover:border-surface-container-highest transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded overflow-hidden border border-border relative">
+<img class="w-full h-full object-cover" data-alt="A tight crop of an Asian female face from a CCTV perspective. Grayscale, cold tone, sharp details despite low resolution feel. Pure dark technical background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADla5uPSPPSoK8Hjywa1Y9kd5ut4q0qemI6rpzAgo7qEq2Y-vrtbNiv9rHsIeGl6v7cme_afg60Nbspp1_yUarhLDKekhT-RQm_1sasuwtJpg8IJxVgPR1m6iMVS-PbZ_0AAGG6QXVyh-6VOuQLxyPHNpWRbAcwyY4X-CYJOQZkERLlPb3xotM7qiSL3oCq-HYJY9pg_XtCp677AJqqRflqMjozXAcpYWPifcIvMeNLnk3vCHMJTe4"/>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-text-primary">TGT-4419-X</span>
+<span class="font-data-technical text-[11px] text-text-secondary">Confidence: 87.9%</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-low px-2 py-1 rounded font-data-technical text-data-technical text-text-secondary border border-border">
+                                [00:04:10 - 00:04:18]
+                            </div>
+<button class="text-surface-tint font-label-mono text-[11px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:text-primary">
+                                Jump <span class="material-symbols-outlined text-[14px]">arrow_right_alt</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Export CTA -->
+<div class="mt-4 flex justify-end pt-4 border-t border-border">
+<button class="bg-transparent border border-border text-text-primary font-body-md text-body-md py-2 px-4 rounded hover:border-surface-tint hover:shadow-[0_0_10px_rgba(195,208,0,0.2)] transition-all flex items-center gap-2 glare-card">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Export Detection Logs (.xlsx)
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Spotlight effect logic
+        document.querySelectorAll('.spotlight-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

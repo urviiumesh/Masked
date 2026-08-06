@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #0a0a0a;
+  color: #ededed;
+  margin: 0;
+}
+
+@layer components {
+  .input-field {
+    @apply w-full bg-[#0A0A0A] border border-border rounded py-2 px-3 text-sm text-text-primary
+      placeholder:text-text-secondary focus:border-surface-tint focus:outline-none focus:ring-1 focus:ring-surface-tint/30 font-mono;
+  }
+  .avatar-img {
+    @apply w-full h-full object-cover object-top;
+  }
+}
+
+.glare-effect {
+  position: relative;
+  overflow: hidden;
+}
+.glare-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(to bottom right, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 60%, rgba(255,255,255,0) 100%);
+  transform: rotate(30deg) translateY(-100%);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+.glare-effect:hover::after {
+  transform: rotate(30deg) translateY(100%);
+}
+
+.border-glow-pulse {
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);
+  animation: pulse-glow 2s infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.3); }
+}
+
+.blinking-dot {
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.shiny-text {
+  background: linear-gradient(120deg, #ededed 0%, #ffffff 50%, #ededed 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine 3s linear infinite;
+}
+@keyframes shine {
+  to { background-position: 200% center; }
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, #ededed 0%, #ffffff 50%, #ededed 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.spotlight {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(228, 242, 34, 0.05), transparent 40%);
+  z-index: 10;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #121212;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}

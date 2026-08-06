@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DHRISHTI - Face Database</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#353534",
+                        "on-primary": "#2f3300",
+                        "tertiary-fixed-dim": "#7bd4dd",
+                        "secondary-fixed-dim": "#a7caf3",
+                        "secondary-container": "#274b6e",
+                        "critical": "#EF4444",
+                        "tertiary-fixed": "#98f1fa",
+                        "on-tertiary": "#00363b",
+                        "text-primary": "#EDEDED",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary-fixed": "#001d35",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#d0e4ff",
+                        "tertiary-container": "#98f1fa",
+                        "on-primary-fixed-variant": "#454a00",
+                        "success": "#10B981",
+                        "on-tertiary-container": "#006f77",
+                        "surface-bright": "#3a3939",
+                        "on-tertiary-fixed-variant": "#004f55",
+                        "inverse-on-surface": "#313030",
+                        "on-surface-variant": "#c8c8ac",
+                        "secondary": "#a7caf3",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "on-background": "#e5e2e1",
+                        "text-secondary": "#A1A1AA",
+                        "surface-container": "#201f1f",
+                        "surface-container-high": "#2a2a2a",
+                        "outline": "#929279",
+                        "inverse-surface": "#e5e2e1",
+                        "primary-container": "#dfed1a",
+                        "on-secondary": "#063254",
+                        "inverse-primary": "#5d6300",
+                        "on-secondary-container": "#99bbe4",
+                        "primary": "#ffffff",
+                        "tertiary": "#ffffff",
+                        "surface-variant": "#353534",
+                        "surface-tint": "#c3d000",
+                        "primary-fixed-dim": "#c3d000",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed": "#1b1d00",
+                        "outline-variant": "#474833",
+                        "on-secondary-fixed-variant": "#25496c",
+                        "surface-dim": "#131313",
+                        "on-primary-container": "#636900",
+                        "on-tertiary-fixed": "#002022",
+                        "border": "#27272A",
+                        "background": "#0A0A0A",
+                        "surface": "#121212",
+                        "primary-fixed": "#dfed1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "panel-gap": "1px",
+                        "margin-page": "24px",
+                        "gutter": "16px",
+                        "container-max": "1920px"
+                    },
+                    "fontFamily": {
+                        "data-technical": ["Geist Mono"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-mono": ["Geist Mono"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-technical": ["13px", { "lineHeight": "1.4", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-mono": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { background-color: #0A0A0A; color: #EDEDED; }
+        .glare-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        .glare-effect::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(45deg);
+            animation: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .card-container:hover .glare-effect::after {
+            opacity: 1;
+            animation: shimmer 1.5s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        .spotlight {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(228, 242, 34, 0.05), transparent 40%);
+            z-index: 10;
+        }
+        .card-overlay {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .card-container:hover .card-overlay {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-body-md relative">
+<div class="spotlight" id="spotlight"></div>
+<!-- TopNavBar -->
+<nav class="flex justify-between items-center w-full px-margin-page h-16 bg-surface-container-low dark:bg-surface-container-low docked full-width top-0 border-b border-border flat no shadows z-50">
+<div class="flex items-center space-x-gutter">
+<span class="font-headline-md text-headline-md tracking-tighter font-bold text-primary dark:text-primary">DHRISHTI</span>
+<div class="hidden md:flex space-x-gutter ml-8">
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">Livestream</a>
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">Video Processing</a>
+<a class="text-primary border-b-2 border-primary-fixed-dim pb-1 relative overflow-hidden group" href="#">
+                    Face Database
+                    <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></span>
+</a>
+</div>
+</div>
+<div>
+<!-- Right side intentionally empty per request -->
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 p-margin-page w-full max-w-container-max mx-auto space-y-gutter relative z-20">
+<!-- Action Bar -->
+<div class="bg-surface border border-border p-6 rounded flex flex-col md:flex-row justify-between items-start md:items-center gap-gutter shadow-[0_0_15px_rgba(228,242,34,0.02)]">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-text-primary mb-2">Database Management</h1>
+<p class="font-data-technical text-data-technical text-text-secondary">System indexing active. 14,204 records verified.</p>
+</div>
+<div class="flex items-center space-x-gutter w-full md:w-auto">
+<div class="relative w-full md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary text-sm">search</span>
+<input class="w-full bg-background border border-border text-text-primary font-data-technical text-data-technical py-2 pl-9 pr-3 rounded focus:border-primary-fixed-dim focus:outline-none focus:ring-0 transition-colors placeholder-text-secondary/50" placeholder="Search ID or Name..." type="text"/>
+</div>
+<button class="bg-[#E4F222] text-[#0A0A0A] px-4 py-2 font-label-mono text-label-mono uppercase tracking-wider hover:bg-white transition-colors duration-200 whitespace-nowrap group relative overflow-hidden flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                    Add New Person
+                </button>
+</div>
+</div>
+<!-- Database Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-panel-gap bg-border">
+<!-- Card 1 -->
+<div class="card-container bg-surface flex flex-col p-4 relative group cursor-pointer transition-all duration-300 hover:bg-surface-container-low border border-transparent hover:border-[#3F3F46] hover:shadow-[inset_0_0_10px_rgba(228,242,34,0.1)]">
+<div class="glare-effect aspect-square w-full mb-3 rounded-sm overflow-hidden bg-background border border-border relative">
+<img class="w-full h-full object-cover filter grayscale contrast-125 opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Grayscale passport style photo of a caucasian male with short hair, stark high contrast lighting, clinical technical surveillance style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvLaJO7OVJkRz--L7XrWzNC8_2kvNiKP1gTMg-V1JMZmWmdx_jbv32Oq7mhe6gs6e-pFX1CZdp6AIeQQIT-Kv3vLU3iWdXLZWB_x0mTl7XoYcEM2llfGczgmrHAJAK4nDPLWshIyZDkIJlzVYMmTYOjyujkQwfT3-u2ut4RH-Y_f4yZpIwzBFh-n2pwQF9IHr1-Xs47aqE7s7qZAX-TTNMpTydkasCrgCQ1ZzoDhFeFlqy_AHO78Tc"/>
+<!-- Overlay Actions -->
+<div class="card-overlay absolute inset-0 bg-black/60 flex items-center justify-center gap-4 backdrop-blur-sm">
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-[#B2D5FF] hover:text-[#B2D5FF] hover:shadow-[0_0_8px_rgba(178,213,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-critical hover:text-critical hover:shadow-[0_0_8px_rgba(239,68,68,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg text-text-primary truncate">Anderson, Thomas</h3>
+<span class="font-label-mono text-label-mono text-text-secondary mt-1 tracking-widest">ID: 994-XY2</span>
+</div>
+<!-- Card 2 -->
+<div class="card-container bg-surface flex flex-col p-4 relative group cursor-pointer transition-all duration-300 hover:bg-surface-container-low border border-transparent hover:border-[#3F3F46] hover:shadow-[inset_0_0_10px_rgba(228,242,34,0.1)]">
+<div class="glare-effect aspect-square w-full mb-3 rounded-sm overflow-hidden bg-background border border-border relative">
+<img class="w-full h-full object-cover filter grayscale contrast-125 opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Grayscale frontal portrait of a black female with natural hair pulled back, clinical stark lighting, security database visual style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACU8iOIibDM0FectwZI2AGNPXdyhFEK_-WAzQLLzBOmLTbaiKh--wXLR7vArkeQvVAkyJrdJcKcBz4_EYCvd4-0QLmvadUndt1xG7S1cz881Z6VDndjq-tMHWGR_yI4XX4-dUcxNfE95G7lgk1K0ViDxfC1AggLxF3f_9VucKAhS0dSxoT70FxB3PwW-EoCGt4ZTIzE5g4xjit-uELGffTEVF_lA-l2TLY-0yNJ3LL6sbj3CKJB9D8"/>
+<!-- Overlay Actions -->
+<div class="card-overlay absolute inset-0 bg-black/60 flex items-center justify-center gap-4 backdrop-blur-sm">
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-[#B2D5FF] hover:text-[#B2D5FF] hover:shadow-[0_0_8px_rgba(178,213,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-critical hover:text-critical hover:shadow-[0_0_8px_rgba(239,68,68,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg text-text-primary truncate">Moss, Carrie-Anne</h3>
+<span class="font-label-mono text-label-mono text-text-secondary mt-1 tracking-widest">ID: 882-TRN</span>
+</div>
+<!-- Card 3 -->
+<div class="card-container bg-surface flex flex-col p-4 relative group cursor-pointer transition-all duration-300 hover:bg-surface-container-low border border-transparent hover:border-[#3F3F46] hover:shadow-[inset_0_0_10px_rgba(228,242,34,0.1)]">
+<div class="glare-effect aspect-square w-full mb-3 rounded-sm overflow-hidden bg-background border border-border relative">
+<img class="w-full h-full object-cover filter grayscale contrast-125 opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Grayscale mugshot style photo of an asian male wearing glasses, high contrast shadows, analytical surveillance aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc49c8pddtBKsgVKlFyA5IryiVHxjeSw_V9CSkOt30HOhYLXHD4vwcDEi2tsaIbQ-9JoOmakTkS1Wx8P1XuoHAm9Xyi6Mp7AQGkXNsoqDby67ViV0b8aeHTHS7fsxYQnLBMBNlxFfFR3LlTSjhrdA37_ZQ4XqSslnJWhhhYMIMHC4XDmSiIIYsZ5oOTeUNGgCZt78zC3fHbgiz-CAXZZceDU5y2SedC573zHgWXq4h3xKhtZN934u0"/>
+<!-- Overlay Actions -->
+<div class="card-overlay absolute inset-0 bg-black/60 flex items-center justify-center gap-4 backdrop-blur-sm">
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-[#B2D5FF] hover:text-[#B2D5FF] hover:shadow-[0_0_8px_rgba(178,213,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-critical hover:text-critical hover:shadow-[0_0_8px_rgba(239,68,68,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg text-text-primary truncate">Fishburne, Laurence</h3>
+<span class="font-label-mono text-label-mono text-text-secondary mt-1 tracking-widest">ID: 102-MRP</span>
+</div>
+<!-- Card 4 -->
+<div class="card-container bg-surface flex flex-col p-4 relative group cursor-pointer transition-all duration-300 hover:bg-surface-container-low border border-transparent hover:border-[#3F3F46] hover:shadow-[inset_0_0_10px_rgba(228,242,34,0.1)]">
+<div class="glare-effect aspect-square w-full mb-3 rounded-sm overflow-hidden bg-background border border-border relative">
+<img class="w-full h-full object-cover filter grayscale contrast-125 opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Grayscale technical ID photo of an older caucasian male with a beard, stark overhead lighting, serious expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjjP3rEeMT9EDs4_miiOz9xA4rbVSuOAfISeNUNmgyXAgSi-9lNAt7oVxv5uqB6UFokkOSIn13KsNX2rm7pXwklutjPBGhMhU2_tYeVIx-lpaLapgJM96ozukCSWw49vScefTS0j3OCi6lRVXk3hDos4ffe4R5EbjEIWechtTJRq4DLSuJWepeklQJSo_42ZAL_HueM0fXrpD6D8zC9QqXITmqrsyRNpqM2OonNjAnoxV19aqH9vG3"/>
+<!-- Overlay Actions -->
+<div class="card-overlay absolute inset-0 bg-black/60 flex items-center justify-center gap-4 backdrop-blur-sm">
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-[#B2D5FF] hover:text-[#B2D5FF] hover:shadow-[0_0_8px_rgba(178,213,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-critical hover:text-critical hover:shadow-[0_0_8px_rgba(239,68,68,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg text-text-primary truncate">Weaving, Hugo</h3>
+<span class="font-label-mono text-label-mono text-text-secondary mt-1 tracking-widest">ID: 001-SMT</span>
+</div>
+<!-- Card 5 -->
+<div class="card-container bg-surface flex flex-col p-4 relative group cursor-pointer transition-all duration-300 hover:bg-surface-container-low border border-transparent hover:border-[#3F3F46] hover:shadow-[inset_0_0_10px_rgba(228,242,34,0.1)]">
+<div class="glare-effect aspect-square w-full mb-3 rounded-sm overflow-hidden bg-background border border-border relative">
+<img class="w-full h-full object-cover filter grayscale contrast-125 opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Grayscale high resolution security photo of a young hispanic female, neutral expression, clinical lighting setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKwrDzstwi3rNKboYII9pKk-R2LXCzuY8ejBh_2DTGGjYddxRLT5jKzq9EMRnPThQSxgksin_azT2mqS9kCQoSb_9bVLHjPArFVYWtYVieFE0OCcuJXZmSaAiXOXPnF3VC9bCib8Xgp8qjMg1CTjGcsgx-njL4EMZX6-M9zAeenIfCqKAOfFrwNEIKcBThM9p9cz_ts1xaLC571_zs457VPK_A91LIPKqQzT2fZDDFqJgThfcpQSKW"/>
+<!-- Overlay Actions -->
+<div class="card-overlay absolute inset-0 bg-black/60 flex items-center justify-center gap-4 backdrop-blur-sm">
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-[#B2D5FF] hover:text-[#B2D5FF] hover:shadow-[0_0_8px_rgba(178,213,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-[#27272A] bg-transparent text-[#EDEDED] flex items-center justify-center hover:border-critical hover:text-critical hover:shadow-[0_0_8px_rgba(239,68,68,0.3)] transition-all">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg text-text-primary truncate">Pantoliano, Joe</h3>
+<span class="font-label-mono text-label-mono text-text-secondary mt-1 tracking-widest">ID: 443-CYP</span>
+</div>
+<!-- Card 6 -->
+<div class="card-container bg-surface flex flex-col p-4 relative group cursor-pointer transition-all duration-300 hover:bg-surface-container-low border border-transparent hover:border-[#3F3F46] hover:shadow-[inset_0_0_10px_rgba(228,242,34,0.1)]">
+<div class="glare-effect aspect-square w-full mb-3 rounded-sm overflow-hidden bg-background border border-border relative">
+<div class="w-full h-full flex flex-col items-center justify-center border border-dashed border-border group-hover:border-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-text-secondary text-3xl group-hover:text-primary-fixed-dim mb-2">person_add</span>
+<span class="font-label-mono text-label-mono text-text-secondary group-hover:text-primary-fixed-dim">NEW ENTRY</span>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg text-text-secondary italic truncate">Unassigned</h3>
+<span class="font-label-mono text-label-mono text-text-secondary/50 mt-1 tracking-widest">ID: PENDING</span>
+</div>
+</div>
+</main>
+<script>
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            document.documentElement.style.setProperty('--mouse-x', `${x}px`);
+            document.documentElement.style.setProperty('--mouse-y', `${y}px`);
+        });
+    </script>
+</body></html>
