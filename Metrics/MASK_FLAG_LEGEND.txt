@@ -1,0 +1,11 @@
+Filename format: ID__MASK_FLAG__image_role.ext
+
+SUR = surgical
+N95 = N95
+K95 = KN95
+CLT = cloth
+GAS = gas
+
+Examples:
+000001__SUR__original.jpg
+000001__SUR__masked.jpg

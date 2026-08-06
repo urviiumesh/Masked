@@ -1,0 +1,2 @@
+Total_Queries,Faces_Processed,No_Face_Detected,Total_TP,Total_FP,Total_TN,Total_FN,Accuracy_Pct,Precision_Pct,Recall_Pct,F1_Score,TPR_Pct,FPR_Pct,Threshold,Total_Time_Sec,Avg_Time_Per_Image_MS
+9630,8256,1374,4994,16,4620,0,99.83,99.68,100,0.9984,100,0.35,0.35,3380.59,351.05

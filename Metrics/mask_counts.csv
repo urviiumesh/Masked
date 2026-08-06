@@ -1,0 +1,6 @@
+mask_category,flag,paired_image_count
+surgical,SUR,228
+N95,N95,228
+KN95,K95,228
+cloth,CLT,227
+gas,GAS,227
