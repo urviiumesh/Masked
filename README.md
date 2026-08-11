@@ -3,23 +3,17 @@
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Backbone ArcFace](https://img.shields.io/badge/backbone-ArcFace%20(buffalo__l)-orange.svg)](https://github.com/deepinsight/insightface)
-[![Rank-1 Accuracy](https://img.shields.io/badge/Rank--1%20Accuracy-99.60%25%20(Masked)-brightgreen.svg)]()
-[![ROC-AUC](https://img.shields.io/badge/ROC--AUC-0.9955-success.svg)]()
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg)]()
 
 ---
 
 ##  Executive Summary & Motivation
 
-Standard deep-learning face recognition systems (trained primarily on unoccluded facial imagery) rely heavily on structural geometry across the nose, mouth, chin, and jawline. When individuals wear facial coverings—such as surgical masks, N95 respirators, cloth masks, gas masks, or eye accessories—conventional feature extractors experience severe performance degradation (typically **30% to 50% drop in verification accuracy**).
-
 This repository presents a complete, production-ready **Masked Face Recognition System** powered by InsightFace's `buffalo_l` ArcFace backbone, enhanced with **Multi-View Occlusion-Augmented Embeddings** and a novel **Safe Online Learning Architecture**.
-
-Without requiring expensive model retraining or fine-tuning, the system achieves **99.60% Rank-1 Identification Accuracy** and a **0.9955 ROC-AUC** across **5,768 masked query benchmark tests** spanning 5 distinct mask categories.
 
 ---
 
-## ✨ Key Features & Technological Innovations
+##  Key Features & Technological Innovations
 
 ### 1.  Multi-View Occlusion-Augmented Embeddings ($3 \times 512$ Baseline Matrix)
 During identity enrollment (`register_face.py`), the system automatically detects 5 2D facial keypoints (eyes, nose, mouth corners) and synthetically generates occluded variants:
@@ -36,61 +30,66 @@ During live webcam streams or video playback (`live_recognition.py`, `video_face
 - **FIFO Buffer (50-View Memory Cap)**: Enforces a strict First-In-First-Out queue capped at 50 views, recycling memory every ~1.6 seconds during continuous streaming.
 - **Zero Disk Pollution**: Modifications occur strictly in RAM, preserving original baseline `.npy` gallery files on disk.
 
-### 3. 🎯 Robust Multi-Scale Face Detection Engine
+### 3.  Robust Multi-Scale Face Detection Engine
 To handle low-resolution input, partial occlusions, or small faces distant from the camera, `register_face.py` employs a 3-stage multi-resolution fallback detection pipeline:
 1. Standard $640 \times 640$ @ confidence threshold $0.5$
 2. Fallback $320 \times 320$ @ confidence threshold $0.3$
 3. Fallback $160 \times 160$ @ confidence threshold $0.2$
 
-### 4. 📊 Empirical Benchmarking & Research Analytics
-Includes an automated benchmarking harness (`test.py`) and graph generator (`generate_research_graphs.py`) capable of parsing ground-truth identities across mask flags (`SUR`, `N95`, `K95`, `CLT`, `GAS`), computing ROC-AUC, TAR@FAR log plots, per-mask-type accuracy breakdowns, and score distribution histograms.
+### 4.  Face Recognition and Recognition Workflows
+The repository supports live recognition, static image recognition, video processing, enrollment, and embedding maintenance workflows.
 
 ---
 
-## 🏗️ System Architecture & Operational Pipeline
+##  System Architecture & Operational Pipeline
 
 ### 1. Enrollment & Matrix Synthesis Pipeline
 
 ```mermaid
-flowchart TD
-    A[Input Single Clean Image] --> B[InsightFace Face Analysis]
-    B --> C[Extract 5 Facial Landmarks kps]
-    
-    C --> D1[Extract Raw Vector -> 1x512]
-    C --> D2[Synthesize Eye Occlusion Rectangle -> 1x512]
-    C --> D3[Synthesize Lower-Face Mask Polygon -> 1x512]
-    
-    D1 --> E[Stack Vectors into 3x512 Matrix]
-    D2 --> E
-    D3 --> E
-    
-    E --> F[Save to faces_db/identity_name.npy]
-```
+---
+config:
+  layout: fixed
+---
+flowchart TB
+    A["Live camera<br>feed"] --> C["SCRFD-10GF"]
+    B["Video Upload"] --> C
+    C --> D["ArcFace<br>ResNet-50<br>CNN"]
+    D --> E["Face embeddings"]
+    E --> F["Vector DB match using<br>cosine similarity"]
+    F --> G{"p &gt; 0.3?"}
+    G -- Yes --> H["Update<br>embeddings"]
+    H --> I["Bounding box<br>with probability"]
+    G -- No / Continue --> D
+    J[("vectorDB<br>.npy")] --> F
+    N["New photo"] --> M["Name"]
+    M --> K["Occlusion Eye"] & L["Occlusion Mask"]
+    K --> J
+    L --> J
 
-### 2. Live Recognition & Safe Online Learning Pipeline
-
-```mermaid
-flowchart TD
-    A[Live Camera / Video Frame] --> B[Detect Face & Extract 1x512 Query Vector]
-    B --> C[Compute Cosine Similarity against all gallery matrices N x 512]
-    C --> D[Select Identity with max score]
-    
-    D --> E{Score >= 0.35?}
-    E -- No --> F[Suppress Output / Reject as Unrecognized]
-    E -- Yes --> G[Display Green Box & Name Tag]
-    
-    G --> H{Score >= 0.55?}
-    H -- No --> I[Maintain Current View Matrix]
-    H -- Yes --> J[np.vstack: Append 1x512 Vector]
-    J --> K{Matrix length > 50?}
-    K -- Yes --> L[Slice matrix[-50:] FIFO truncation]
-    K -- No --> M[Update In-Memory Database]
-    L --> M
+    A:::input
+    C:::process
+    B:::input
+    D:::process
+    E:::process
+    F:::process
+    G:::decision
+    H:::process
+    I:::output
+    J:::database
+    N:::input
+    M:::input
+    K:::input
+    L:::input
+    classDef input fill:#e8f3ff,stroke:#2457a6,stroke-width:2px,color:#111
+    classDef process fill:#ffffff,stroke:#2457a6,stroke-width:2px,color:#111
+    classDef decision fill:#fff4cc,stroke:#9a6a00,stroke-width:2px,color:#111
+    classDef output fill:#e8f8e8,stroke:#287a36,stroke-width:2px,color:#111
+    classDef database fill:#f3e8ff,stroke:#7040a0,stroke-width:2px,color:#111
 ```
 
 ---
 
-## 📐 Mathematical Foundations
+##  Mathematical Foundations
 
 ### 1. Cosine Similarity Formula
 Given a live query feature vector $\mathbf{q} \in \mathbb{R}^{512}$ and a stored gallery view vector $\mathbf{v}_j \in \mathbb{R}^{512}$:
@@ -104,16 +103,7 @@ $$S_i = \max_{j \in \{1, \dots, N\}} \text{Similarity}(\mathbf{q}, \mathbf{v}_{i
 
 $$\text{Predicted Identity} = \arg\max_{i} S_i \quad \text{subject to} \quad \max_i S_i \ge \tau_{\text{rec}} = 0.35$$
 
-### 3. Receiver Operating Characteristic & TAR @ FAR
-True Accept Rate (TAR) at a specified False Accept Rate (FAR):
-
-$$\text{TAR}(\tau) = \frac{\text{TP}(\tau)}{\text{TP}(\tau) + \text{FN}(\tau)}, \quad \text{FAR}(\tau) = \frac{\text{FP}(\tau)}{\text{FP}(\tau) + \text{TN}(\tau)}$$
-
-$$\text{AUC} = \int_{0}^{1} \text{TAR}(\text{FAR}) \, d(\text{FAR})$$
-
 ---
-
-## 📈 Benchmark Performance & Results
 
 Evaluation conducted across **15,398 inference operations** comparing unoccluded baseline images against 5 masked test categories (1,138 genuine masked queries + 4,636 impostor queries).
 
@@ -121,14 +111,6 @@ Evaluation conducted across **15,398 inference operations** comparing unoccluded
 
 | Metric | Original (Unoccluded) | Masked (Occluded) | Performance Delta |
 |---|:---:|:---:|:---:|
-| **Total Query Benchmark Size** | 9,630 queries | 5,768 queries | — |
-| **Rank-1 Identification Accuracy** | **99.83%** | **99.60%** | **−0.23%** |
-| **Precision** | **99.68%** | **98.52%** | −1.16% |
-| **Recall / True Positive Rate (TPR)** | **100.00%** | **99.47%** | −0.53% |
-| **F1-Score** | **0.9984** | **0.9899** | −0.0085 |
-| **False Positive Rate (FPR @ $\tau=0.35$)** | **0.35%** | **0.37%** | +0.02% |
-| **ROC-AUC (Area Under Curve)** | **0.9990** | **0.9955** | **−0.0035** |
-| **TAR @ FAR = 1% (0.01)** | **0.9988** | **0.9947** | −0.0041 |
 | **Average Inference Latency (CPU)** | **351.05 ms** | **351.10 ms** | +0.05 ms |
 
 ### 2. Breakdown Across Mask Types
@@ -140,7 +122,7 @@ Evaluation conducted across **15,398 inference operations** comparing unoccluded
 | **KN95 Respirator** | `K95` | 228 | 227 | 0 | **99.56%** | **0.9016** |
 | **Cloth Mask** | `CLT` | 227 | 225 | 1 | **99.56%** | **0.9032** |
 | **Gas Mask** | `GAS` | 227 | 224 | 0 | **98.68%** | 0.8606 |
-| **Total / Overall** | — | **1,138** | **1,131** | **1** | **99.47%** | **0.8801** |
+| **Total / Overall** | - | **1,138** | **1,131** | **1** | **99.47%** | **0.8801** |
 
 ---
 
@@ -160,10 +142,8 @@ d:/Masked/
 ├── recognize_face.py                    # Static single-image query recognition module
 ├── video_face_recognition.py            # Video file (.mp4) stream processor & renderer
 ├── reset_embeddings.py                  # Resets memory-expanded matrices back to initial 3 views
-├── test.py                              # Master benchmark harness & CSV logger
-├── generate_research_graphs.py          # Publication-grade chart & ROC curve generator
+├── test.py                              # Master recognition workflow & CSV logger
 │
-├── comprehensive_evaluation_report.md   # Full experimental report with dataset metrics
 ├── online_learning_architecture.md      # Detailed documentation of dynamic memory mechanics
 ├── requirements.txt                     # Core Python dependencies
 └── README.md                            # Main project documentation (this file)
@@ -171,7 +151,7 @@ d:/Masked/
 
 ---
 
-## ⚙️ Installation & Setup Guide
+##  Installation & Setup Guide
 
 ### 1. Prerequisites
 - **Operating System**: Windows 10/11, Ubuntu 20.04+, or macOS
@@ -205,7 +185,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-> [!NOTE]
+> **Note:**
 > `requirements.txt` includes:
 > - `insightface==0.7.3`
 > - `onnxruntime==1.16.3`
@@ -214,7 +194,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Quickstart & Operational Workflows
+##  Quickstart & Operational Workflows
 
 ### Workflow 1: Enrolling a New Person (Single Face)
 
@@ -264,29 +244,11 @@ python video_face_recognition.py
 
 ---
 
-### Workflow 5: Running Benchmark Evaluation Suite
-
-To run the large-scale benchmark across masked and unmasked query datasets:
-
-```bash
-python test.py
-```
-*Generates per-image evaluation results in `masked_recognition_per_image_results.csv` and summary metrics in `masked_recognition_metrics_by_mask_type.csv`.*
+---
 
 ---
 
-### Workflow 6: Generating Research Graphs
-
-Produce publication-grade visualization graphics (ROC curves, TAR@FAR log plots, score distributions):
-
-```bash
-python generate_research_graphs.py
-```
-*Outputs PNG figures to the `graphs/` directory.*
-
----
-
-### Workflow 7: Maintenance — Resetting Embedding Matrices
+### Workflow 7: Maintenance - Resetting Embedding Matrices
 
 If live sessions have expanded memory matrices beyond the baseline views, reset all stored embeddings back to the original $3 \times 512$ matrix shape:
 
@@ -296,9 +258,9 @@ python reset_embeddings.py
 
 ---
 
-## 🎛️ Hyperparameter & Threshold Configuration
+## 🎛 Hyperparameter & Threshold Configuration
 
-Key system parameters can be adjusted directly in `live_recognition.py`, `video_face_recognition.py`, and `test.py`:
+Key system parameters can be adjusted directly in `live_recognition.py` and `video_face_recognition.py`:
 
 ```python
 # Decision Thresholds
@@ -314,7 +276,7 @@ DETECTION_SIZE       = (640, 640) # Input resolution for InsightFace detector
 
 ---
 
-## ❓ Frequently Asked Questions (FAQ)
+##  Frequently Asked Questions (FAQ)
 
 <details>
 <summary><b>Q: Does this system require GPU acceleration?</b></summary>
@@ -336,7 +298,7 @@ Keeping updates in RAM ensures maximum execution speed ($O(1)$ matrix slicing) w
 
 ---
 
-## 📄 License & Acknowledgments
+##  License & Acknowledgments
 
 - **Model Backbone**: Powered by [InsightFace (DeepInsight)](https://github.com/deepinsight/insightface) using the `buffalo_l` ArcFace pre-trained weights.
 - **License**: Distributed under the [MIT License](LICENSE). Free for academic, research, and commercial applications.
