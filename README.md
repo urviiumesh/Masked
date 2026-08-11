@@ -7,9 +7,11 @@
 
 ---
 
-##  Executive Summary & Motivation
-
-This repository presents a complete, production-ready **Masked Face Recognition System** powered by InsightFace's `buffalo_l` ArcFace backbone, enhanced with **Multi-View Occlusion-Augmented Embeddings** and a novel **Safe Online Learning Architecture**.
+##  Overview
+This projects performs facial recognition on people wearing masks or any other lower face / upper face occlusion as it provides an occlusion-aware face recognition pipeline built on InsightFace's `buffalo_l` ArcFace backbone.
+The need for such systems became increasingly evident in the post-COVID-19 era, when mask-wearing became more common in public spaces.
+It combines face detection, occlusion-aware enrollment, cosine-similarity matching, and controlled online adaptation to store faces and maintain accuracy .
+The system supports live camera feeds, images, and video while handling masked and partially occluded faces.
 
 ---
 
