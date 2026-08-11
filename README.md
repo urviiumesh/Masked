@@ -14,6 +14,11 @@ It combines face detection, occlusion-aware enrollment, cosine-similarity matchi
 The system supports live camera feeds, images, and video while handling masked and partially occluded faces.
 
 ---
+## Real Life Use Cases
+  - **Secure Access Control**: Identify authorized personnel entering offices, laboratories, factories, and restricted facilities even when masks or PPE obscure the face.
+  - **Security & Surveillance**: Recognize individuals from live CCTV or camera feeds despite masks, changing angles, lighting, and partial facial occlusion.
+  - **Healthcare & Industrial PPE**: Maintain reliable identity verification for doctors, workers, and staff wearing masks, respirators, goggles, or other protective equipment.
+  - **Watchlist & Investigation**: Search live or recorded video against a known identity database when only partially visible facial features are available.
 
 ##  Key Features & Technological Innovations
 
@@ -51,42 +56,37 @@ The repository supports live recognition, static image recognition, video proces
 ---
 config:
   layout: fixed
+  themeVariables:
+    fontSize: 11px
 ---
 flowchart TB
-    A["Live camera<br>feed"] --> C["SCRFD-10GF"]
+    A["Live Camera<br>Feed"] --> C["SCRFD-10GF"]
     B["Video Upload"] --> C
     C --> D["ArcFace<br>ResNet-50<br>CNN"]
-    D --> E["Face embeddings"]
-    E --> F["Vector DB match using<br>cosine similarity"]
-    F --> G{"p &gt; 0.3?"}
-    G -- Yes --> H["Update<br>embeddings"]
-    H --> I["Bounding box<br>with probability"]
+    D --> E["Face Embeddings"]
+    E --> F["Vector DB Match<br>Cosine Similarity"]
+    F --> G{"p > 0.3?"}
+    G -- Yes --> H["Update<br>Embeddings"]
+    H --> I["Bounding Box<br>with Probability"]
     G -- No / Continue --> D
-    J[("vectorDB<br>.npy")] --> F
-    N["New photo"] --> M["Name"]
-    M --> K["Occlusion Eye"] & L["Occlusion Mask"]
+    J[("Vector DB<br>.npy")] --> F
+    N["New Photo"] --> M["Name"]
+    M --> K["Occlusion Eye"]
+    M --> L["Occlusion Mask"]
     K --> J
     L --> J
 
-    A:::input
-    C:::process
-    B:::input
-    D:::process
-    E:::process
-    F:::process
-    G:::decision
-    H:::process
-    I:::output
-    J:::database
-    N:::input
-    M:::input
-    K:::input
-    L:::input
-    classDef input fill:#e8f3ff,stroke:#2457a6,stroke-width:2px,color:#111
-    classDef process fill:#ffffff,stroke:#2457a6,stroke-width:2px,color:#111
-    classDef decision fill:#fff4cc,stroke:#9a6a00,stroke-width:2px,color:#111
-    classDef output fill:#e8f8e8,stroke:#287a36,stroke-width:2px,color:#111
-    classDef database fill:#f3e8ff,stroke:#7040a0,stroke-width:2px,color:#111
+    class A,B,N input
+    class C,D,E,F,H,M,K,L process
+    class G decision
+    class I output
+    class J database
+
+    classDef input fill:#e8f3ff,stroke:#2457a6,stroke-width:1.5px,color:#111
+    classDef process fill:#fff,stroke:#2457a6,stroke-width:1.5px,color:#111
+    classDef decision fill:#fff4cc,stroke:#9a6a00,stroke-width:1.5px,color:#111
+    classDef output fill:#e8f8e8,stroke:#287a36,stroke-width:1.5px,color:#111
+    classDef database fill:#f3e8ff,stroke:#7040a0,stroke-width:1.5px,color:#111
 ```
 
 ---
@@ -99,32 +99,11 @@ Given a live query feature vector $\mathbf{q} \in \mathbb{R}^{512}$ and a stored
 $$\text{Similarity}(\mathbf{q}, \mathbf{v}_j) = \frac{\mathbf{q} \cdot \mathbf{v}_j}{\|\mathbf{q}\|_2 \|\mathbf{v}_j\|_2}$$
 
 ### 2. Multi-View Maximum Similarity Matching
-For an enrolled identity $i$ possessing an $N \times 512$ view matrix $\mathbf{M}_i = [\mathbf{v}_{i,1}, \mathbf{v}_{i,2}, \dots, \mathbf{v}_{i,N}]^T$:
+For an enrolled identity $i$ possessing an $N \times 512$ view matrix :
 
 $$S_i = \max_{j \in \{1, \dots, N\}} \text{Similarity}(\mathbf{q}, \mathbf{v}_{i,j})$$
 
 $$\text{Predicted Identity} = \arg\max_{i} S_i \quad \text{subject to} \quad \max_i S_i \ge \tau_{\text{rec}} = 0.35$$
-
----
-
-Evaluation conducted across **15,398 inference operations** comparing unoccluded baseline images against 5 masked test categories (1,138 genuine masked queries + 4,636 impostor queries).
-
-### 1. Consolidated Summary Table
-
-| Metric | Original (Unoccluded) | Masked (Occluded) | Performance Delta |
-|---|:---:|:---:|:---:|
-| **Average Inference Latency (CPU)** | **351.05 ms** | **351.10 ms** | +0.05 ms |
-
-### 2. Breakdown Across Mask Types
-
-| Mask Type | Flag | Genuine Queries | True Positives (TP) | False Positives (FP) | Accuracy / TPR | Mean Cosine Score |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Surgical Mask** | `SUR` | 228 | 228 | 0 | **100.00%** | **0.8805** |
-| **N95 Respirator** | `N95` | 228 | 227 | 0 | **99.56%** | 0.8544 |
-| **KN95 Respirator** | `K95` | 228 | 227 | 0 | **99.56%** | **0.9016** |
-| **Cloth Mask** | `CLT` | 227 | 225 | 1 | **99.56%** | **0.9032** |
-| **Gas Mask** | `GAS` | 227 | 224 | 0 | **98.68%** | 0.8606 |
-| **Total / Overall** | - | **1,138** | **1,131** | **1** | **99.47%** | **0.8801** |
 
 ---
 
