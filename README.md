@@ -1,4 +1,4 @@
-# 🎭 Masked Face Recognition System
+#  Masked Face Recognition System
 ### Robust Closed-Set Identification, 1:1 Verification, and 1:N Watchlist Search under Extreme Occlusion
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
@@ -9,7 +9,7 @@
 
 ---
 
-## 📌 Executive Summary & Motivation
+##  Executive Summary & Motivation
 
 Standard deep-learning face recognition systems (trained primarily on unoccluded facial imagery) rely heavily on structural geometry across the nose, mouth, chin, and jawline. When individuals wear facial coverings—such as surgical masks, N95 respirators, cloth masks, gas masks, or eye accessories—conventional feature extractors experience severe performance degradation (typically **30% to 50% drop in verification accuracy**).
 
@@ -21,7 +21,7 @@ Without requiring expensive model retraining or fine-tuning, the system achieves
 
 ## ✨ Key Features & Technological Innovations
 
-### 1. 🧬 Multi-View Occlusion-Augmented Embeddings ($3 \times 512$ Baseline Matrix)
+### 1.  Multi-View Occlusion-Augmented Embeddings ($3 \times 512$ Baseline Matrix)
 During identity enrollment (`register_face.py`), the system automatically detects 5 2D facial keypoints (eyes, nose, mouth corners) and synthetically generates occluded variants:
 - **Clean Baseline View**: Unoccluded facial image ($1 \times 512$ embedding).
 - **Synthetic Eye Occlusion View**: Simulated sunglasses/goggles covering the periocular region ($1 \times 512$ embedding).
@@ -29,7 +29,7 @@ During identity enrollment (`register_face.py`), the system automatically detect
 
 These vectors are vertically concatenated into an initial $3 \times 512$ matrix per enrolled identity.
 
-### 2. ⚡ Safe Online Learning Architecture (Dynamic In-Memory Memory Adaptation)
+### 2.  Safe Online Learning Architecture (Dynamic In-Memory Memory Adaptation)
 During live webcam streams or video playback (`live_recognition.py`, `video_face_recognition.py`), the system dynamically adapts to real-time changes in ambient lighting, facial posture, and camera angles:
 - **Recognition Threshold ($\tau_{\text{rec}} = 0.35$)**: Draws green bounding boxes and labels recognized identities. Unknowns below $0.35$ are cleanly suppressed without visual clutter.
 - **Safe Online Learning Threshold ($\tau_{\text{learn}} = 0.55$)**: When a live frame scores $\ge 0.55$ (extreme high confidence), the current $1 \times 512$ embedding is appended (`np.vstack`) to the identity's in-memory view matrix.
